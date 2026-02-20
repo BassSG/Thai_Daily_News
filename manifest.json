@@ -2,7 +2,7 @@
   "name": "Thai Daily News",
   "short_name": "Thai News",
   "description": "Thai News",
-  "start_url": "https://script.google.com/macros/s/AKfycbxhn42FTquefTq0s2MyTS1Nqf7VBYygSRixwrh4mNfKg0OWafz2Dr4McNCjy-JXnOkp0A/exec",
+  "start_url": "https://script.google.com/macros/s/AKfycbzrtnVarifiOW8fub4EIB0mEscqLhVOqKFp1vzSMXSsG7DTkx1hET8kQ7NZ6TRvBEB5IQ/exec",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
