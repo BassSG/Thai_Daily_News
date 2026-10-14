@@ -1,5 +1,18 @@
 # Verification · 2026-10-14
 
+## 2.3 · Browse news inside Android widgets
+
+Release source: `11dc7a719563e3f4da70d728854bf938740de893`. [Successful build, signing, release lint and both device checks](https://github.com/BassSG/Thai_Daily_News/actions/runs/38594286781).
+
+- Android 11/API 30 and Android 15/API 35 emulator checks both passed against the live GAS endpoint. The former exercises the RemoteViewsService adapter; the latter exercises RemoteCollectionItems.
+- Bound all three widget providers to native AppWidgetHost views. Invoked actual next/previous controls, checked forward and backward wrapping, independent widget cursors and the selected story remaining after a normal refresh.
+- Injected touchscreen swipes into the 4×4 ListView and verified that the first visible item advanced. Clicked a story after scrolling and verified the matching headline in the real reader. MainActivity uses singleTop to reuse the reader; widget article events close any previously open settings dialog.
+- Reviewed screenshots before navigation, after switching the small widget and after scrolling the large widget. Confirmed pictures, publisher credits, position indicators, themes and the compact headline's visible bounds.
+- Photo opt-out, a story without photo metadata, cached thumbnail size, bounded collection parcel, bookmark storage, reader settings, notification category filtering, HTTPS validation and native notification posting passed. Notification checks wait for asynchronous posting.
+- Each widget selects at most 20 matching stories. Paging reads the local news cache; a separate image-only JobScheduler job fills missing photos without fetching a new GAS snapshot. Image downloads remain bounded to 20 requests/25 seconds and a 10 MB cache.
+- 17 Node tests passed. GAS deployment 63 retains the existing endpoint, credentials and ingestion schedule; owner bootstrap remains disabled.
+- Downloaded the public stable APK and matched it to the tested artifact: SHA-256 `fb6fec508726965f86312d65b6e245285cbb26ff3fce42dc61305d04c3e75e92`. VersionCode 20300 uses the existing signing identity.
+
 ## 2.2 · Android widget photos
 
 Release source: `cc8ebdcbd6e350506e2ddca5a0ca47bf648d3d16`. [Successful build, signing, lint and Android device check](https://github.com/BassSG/Thai_Daily_News/actions/runs/38578886297).
