@@ -1,1 +1,1 @@
-globalThis.TDN_CONFIG={version:'2.0.0',api:'https://script.google.com/macros/s/AKfycbwatsqO1HW7xmIbfJgm6P-4otzfNbvGeVdcVjflwHZxzbDM34o4ul_Fe3Wfy-NuKVlaoQ/exec',web:'https://basssg.github.io/Thai_Daily_News/'};
+globalThis.TDN_CONFIG={version:'2.1.0',api:'https://script.google.com/macros/s/AKfycbwatsqO1HW7xmIbfJgm6P-4otzfNbvGeVdcVjflwHZxzbDM34o4ul_Fe3Wfy-NuKVlaoQ/exec',web:'https://basssg.github.io/Thai_Daily_News/'};

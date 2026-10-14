@@ -9,3 +9,25 @@
 /* Keep the reading controls compact so the first news items remain visible on phones. */
 @media(max-width:720px){.topbar{height:64px}main{padding-top:20px}.page-heading{margin-bottom:19px}h1{font-size:24px}.hero-card{min-height:220px;padding:20px}.hero-card h2{font-size:21px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}.hero-card p{-webkit-line-clamp:2}.hero-kicker{margin-bottom:13px}.page-heading p{font-size:11px}.bottom-nav button{font-size:10px}.category-chip{font-size:11px}.story-meta{font-size:11px}.news-card .story-meta{font-size:10px}.category-label{font-size:10px}.news-card h3{font-size:17px}.news-card .excerpt{font-size:12px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
+
+/* Publisher photography is part of the reading layout, with a text fallback on failure. */
+.story-photo{margin:0;overflow:hidden;background:var(--panel2);position:relative}
+.story-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.hero-card.has-image{padding:0;display:block;min-height:0}
+.hero-card.has-image:before{display:none}
+.hero-photo{height:270px;border-bottom:1px solid var(--line)}
+.hero-copy{position:relative}
+.has-image .hero-copy{padding:25px 28px 26px}
+.has-image h2{max-width:100%;font-size:25px;line-height:1.6}
+.has-image .hero-kicker{margin-bottom:13px}
+.has-image .hero-bottom{margin-top:20px}
+.news-card .story-open{display:flex;align-items:flex-start;gap:20px}
+.story-copy{flex:1;min-width:0}
+.thumb-photo{width:148px;height:106px;border-radius:12px;flex:none;margin-top:3px}
+.has-photo h3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.article-photo{margin:0 0 22px;border-radius:14px;background:transparent}
+.article-photo img{height:auto;aspect-ratio:16/10;object-fit:cover;border-radius:14px;background:var(--panel)}
+.article-photo figcaption{padding:10px 2px 0;font-size:10px;line-height:1.8;color:var(--muted)}
+@media(max-width:1220px){.hero-photo{height:235px}.thumb-photo{width:124px;height:100px}.news-card .story-open{gap:14px}}
+@media(max-width:720px){.hero-photo{height:205px}.has-image .hero-copy{padding:19px 20px 22px}.has-image h2{font-size:21px}.has-image .hero-bottom{margin-top:16px}.news-card .story-open{gap:13px}.thumb-photo{width:105px;height:94px;border-radius:10px}.has-photo .excerpt{display:none}.has-photo h3{font-size:16px;line-height:1.65}.article-photo{margin-left:-4px;margin-right:-4px}.article-photo img{aspect-ratio:16/10}}
+@media(max-width:370px){.thumb-photo{width:86px;height:88px}.news-card .story-open{gap:10px}.hero-photo{height:185px}}
