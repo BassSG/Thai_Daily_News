@@ -91,9 +91,6 @@ jobs:
             grep -q TDN_SMOKE_OK smoke-results.txt
             mkdir -p device-qa
             adb pull /sdcard/Android/data/com.basssg.thaidailynews/files/qa/. device-qa/
-            adb shell cmd statusbar expand-notifications
-            adb shell screencap -p /sdcard/notifications.png
-            adb pull /sdcard/notifications.png device-qa/notifications.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -19,8 +19,10 @@ public class MainActivity extends Activity {
     private final Handler main=new Handler(Looper.getMainLooper());
     @Override public void onCreate(Bundle state){
         super.onCreate(state);initialArticle=getIntent().getStringExtra("article");
-        web=new WebView(this);web.setBackgroundColor(Color.rgb(8,15,28));setContentView(web);
-        web.setOnApplyWindowInsetsListener((v,insets)->{if(Build.VERSION.SDK_INT>=30){android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return WindowInsets.CONSUMED;}v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});
+        web=new WebView(this);web.setBackgroundColor(Color.rgb(8,15,28));
+        android.widget.FrameLayout container=new android.widget.FrameLayout(this);container.setBackgroundColor(Color.rgb(8,15,28));container.addView(web,new android.widget.FrameLayout.LayoutParams(-1,-1));setContentView(container);
+        // WebView content ignores its own view padding: apply system-bar insets to its parent.
+        container.setOnApplyWindowInsetsListener((v,insets)->{if(Build.VERSION.SDK_INT>=30){android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return WindowInsets.CONSUMED;}v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});
         WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setMediaPlaybackRequiresUserGesture(true);settings.setSupportMultipleWindows(false);
         web.addJavascriptInterface(new NativeBridge(),"NativeNews");web.setWebChromeClient(new WebChromeClient());
         web.setWebViewClient(new WebViewClient(){
