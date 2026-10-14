@@ -103,6 +103,13 @@ jobs:
             grep -q TDN_SMOKE_OK smoke-results.txt
             mkdir -p device-qa
             adb pull /sdcard/Android/data/com.basssg.thaidailynews/files/qa/. device-qa/
+            adb shell am start -n com.basssg.thaidailynews/.MainActivity
+            adb shell am broadcast -n com.basssg.thaidailynews/.NotificationTestReceiver
+            sleep 2
+            adb shell cmd statusbar expand-notifications
+            sleep 1
+            adb shell screencap -p /sdcard/notifications-live.png
+            adb pull /sdcard/notifications-live.png device-qa/notifications-live.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:
