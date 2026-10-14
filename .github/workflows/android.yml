@@ -1,7 +1,7 @@
 name: Android application
 on:
   push:
-    branches: [main, codex/news-application, codex/news-images, codex/widget-photos]
+    branches: [main, codex/news-application, codex/news-images, codex/widget-photos, codex/widget-navigation]
   workflow_dispatch:
 permissions:
   contents: read
@@ -51,10 +51,10 @@ jobs:
           sdkmanager 'platforms;android-36' 'build-tools;35.0.0' >/dev/null
           gradle --no-daemon :app:assembleRelease :app:assembleDebug :app:assembleDebugAndroidTest :app:lintRelease
           mkdir -p ../artifacts
-          cp app/build/outputs/apk/release/app-release.apk ../artifacts/Thai-Daily-News-2.2.0.apk
+          cp app/build/outputs/apk/release/app-release.apk ../artifacts/Thai-Daily-News-2.3.0.apk
           cp app/build/outputs/apk/debug/app-debug.apk ../artifacts/app-debug.apk
           cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk ../artifacts/app-debug-androidTest.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs ../artifacts/Thai-Daily-News-2.2.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs ../artifacts/Thai-Daily-News-2.3.0.apk
       - uses: actions/upload-artifact@v4
         with:
           name: android-application
@@ -90,7 +90,7 @@ jobs:
       - name: Exercise the app on Android
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: ${{ matrix.api }}
           arch: x86_64
           profile: pixel_7
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -dns-server 8.8.8.8
@@ -98,7 +98,7 @@ jobs:
           script: |
             adb install artifacts/app-debug.apk
             adb install artifacts/app-debug-androidTest.apk
-            adb shell pm grant com.basssg.thaidailynews android.permission.POST_NOTIFICATIONS
+            if [ ${{ matrix.api }} -ge 33 ]; then adb shell pm grant com.basssg.thaidailynews android.permission.POST_NOTIFICATIONS; fi
             adb shell am instrument -w com.basssg.thaidailynews.test/com.basssg.thaidailynews.SmokeInstrumentation | tee smoke-results.txt
             mkdir -p device-qa
             adb pull /sdcard/Android/data/com.basssg.thaidailynews/files/qa/. device-qa/

@@ -2,7 +2,7 @@ plugins { id 'com.android.application' }
 android {
     namespace 'com.basssg.thaidailynews'
     compileSdk 36
-    defaultConfig { applicationId 'com.basssg.thaidailynews'; minSdk 26; targetSdk 36; versionCode 20200; versionName '2.2.0'; testInstrumentationRunner 'com.basssg.thaidailynews.SmokeInstrumentation' }
+    defaultConfig { applicationId 'com.basssg.thaidailynews'; minSdk 26; targetSdk 36; versionCode 20300; versionName '2.3.0'; testInstrumentationRunner 'com.basssg.thaidailynews.SmokeInstrumentation' }
     signingConfigs { release { if (System.getenv('TDN_KEYSTORE_PATH')) { storeFile file(System.getenv('TDN_KEYSTORE_PATH')); storePassword System.getenv('TDN_STORE_PASSWORD'); keyAlias System.getenv('TDN_KEY_ALIAS'); keyPassword System.getenv('TDN_STORE_PASSWORD') } } }
     buildTypes { release { signingConfig signingConfigs.release; minifyEnabled false } }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }

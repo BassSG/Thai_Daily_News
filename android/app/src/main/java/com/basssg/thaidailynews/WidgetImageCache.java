@@ -55,7 +55,7 @@ final class WidgetImageCache {
             try{
                 File image=file(c,url);if(image.isFile()&&image.length()>0)continue;
                 Long failed=failures.get(url);if(failed!=null&&System.currentTimeMillis()-failed<RETRY_MS)continue;
-                if(attempts>=12||SystemClock.elapsedRealtime()>=deadline)break;attempts++;
+                if(attempts>=20||SystemClock.elapsedRealtime()>=deadline)break;attempts++;
                 byte[] bytes=download(url,deadline);
                 BitmapFactory.Options bounds=new BitmapFactory.Options();bounds.inJustDecodeBounds=true;BitmapFactory.decodeByteArray(bytes,0,bytes.length,bounds);
                 if(bounds.outWidth<=0||bounds.outHeight<=0||bounds.outWidth>32768||bounds.outHeight>32768||(long)bounds.outWidth*bounds.outHeight>80_000_000L)throw new IOException("Unsupported image dimensions");
@@ -75,6 +75,10 @@ final class WidgetImageCache {
             }catch(Exception e){failures.put(url,System.currentTimeMillis());}
         }
         prune(c);
+    }
+    static Bitmap collectionImage(Context c,String url){
+        Bitmap image=get(c,url,false);if(image==null)return null;
+        Bitmap small=Bitmap.createScaledBitmap(image,128,80,true);if(small!=image)image.recycle();return small;
     }
     private static byte[] download(String url,long deadline)throws Exception{
         for(int redirects=0;redirects<5;redirects++){
