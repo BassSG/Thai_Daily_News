@@ -1,5 +1,18 @@
 # Verification · 2026-10-14
 
+## 2.1 · Publisher photographs
+
+Release source: `507a57fa69242a351b5015b03f188a33d3a96e77`. [Successful build and Android device check](https://github.com/BassSG/Thai_Daily_News/actions/runs/38560568484).
+
+- 17 Node tests passed, including Media RSS, enclosure, HTML and Open Graph image extraction, safe URLs, homepage/tiny-image rejection and preservation across feed refreshes.
+- Android 15 emulator waited for the actual hero photograph to finish loading before capturing the home screen; article, bookmarks, settings, widgets and notifications also passed.
+- Reviewed the native home screenshot with the real publisher photograph. Public GitHub Pages verified a loaded 1200px hero image, loaded thumbnails and version 2.1 UI.
+- GAS deployment 59 serves 13 feeds with bounded publisher metadata requests. Owner bootstrap is disabled in both deployed and current source.
+- Both APK download names contain the same signed build; downloaded published APK and verified its SHA-256 against the tested artifact.
+- No paid image search or AI image calls. Some stories have no publisher image, and failed image loads fall back to readable text. Original publisher images can be unavailable or slow; they are not replaced by unrelated stock photos.
+
+## 2.0 · Original application release
+
 Release source: `b449c6449d2320f8acd8cdf97c25642e698c9b55`
 
 - Android build, release lint, APK signing verification and Android 15 device smoke test: [successful workflow](https://github.com/BassSG/Thai_Daily_News/actions/runs/38555206286).
