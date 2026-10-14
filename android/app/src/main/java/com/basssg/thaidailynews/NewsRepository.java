@@ -51,7 +51,7 @@ public final class NewsRepository {
         java.nio.file.Files.move(temp.toPath(),dest.toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING,java.nio.file.StandardCopyOption.ATOMIC_MOVE);
         prefs(c).edit().putLong("last_success",System.currentTimeMillis()).apply();
         if(notify)notifyNew(c,old,snapshot);
-        NewsWidgetProvider.updateAll(c);return response;
+        NewsWidgetProvider.updateAll(c);NewsWidgetProvider.refreshPhotos(c);return response;
     }
     static long timestamp(String s){try{return Instant.parse(s).toEpochMilli();}catch(Exception e){return 0;}}
     public static boolean matches(JSONObject article,JSONObject setting){

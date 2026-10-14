@@ -1,0 +1,7 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/story_row" android:layout_width="match_parent" android:layout_height="34dp" android:orientation="horizontal" android:gravity="center_vertical" android:paddingTop="3dp" android:paddingBottom="3dp">
+  <ImageView android:id="@+id/story_photo" android:layout_width="42dp" android:layout_height="28dp" android:layout_marginEnd="8dp" android:scaleType="centerCrop" android:background="@drawable/widget_photo_frame" android:clipToOutline="true" android:contentDescription="ภาพจากสำนักข่าว"/>
+  <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+    <TextView android:id="@+id/story_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="#F0F1F4" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end"/>
+    <TextView android:id="@+id/story_source" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="8sp" android:textColor="#94A2B8" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:visibility="gone"/>
+  </LinearLayout>
+</LinearLayout>
