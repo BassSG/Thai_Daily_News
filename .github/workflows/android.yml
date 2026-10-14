@@ -65,6 +65,10 @@ jobs:
           name: android-build-reports
           path: android/app/build/reports/
   device-check:
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [30, 35]
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 25
