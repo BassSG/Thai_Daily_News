@@ -53,4 +53,6 @@ Android ใช้ Java 17, Gradle 8.13, AGP 8.11.1 และ compile/target SDK 
 
 โลโก้ใหม่สร้างด้วย built-in ImageGen สำหรับแอปนี้ ไฟล์ต้นฉบับ `assets/logo-master.png` และไอคอนแพลตฟอร์มสร้างจากไฟล์เดียวกัน โทน Midnight Navy/Champagne Gold และ Ivory
 
-Prompt: Premium app icon for the existing Thai Daily News application. A compact TD-inspired folded newspaper and rising signal, champagne gold and ivory against midnight navy, generous adaptive-icon safe area, editorial luxury, recognizable at small sizes, one symbol, no words, no watermark.
+โลโก้รุ่นใหม่ใช้สัญลักษณ์แผ่นข่าวทรงเรขาคณิตสี Ivory สองแผ่นและจุด Champagne บนพื้น Midnight Navy ไฟล์ต้นฉบับสร้างใหม่ด้วย ImageGen และย่อขนาดสำหรับแต่ละแพลตฟอร์ม
+
+Prompt: Contemporary premium mobile news application icon. One bold minimal abstract symbol: two offset ivory geometric editorial panes with a small champagne square, on solid midnight navy. Precise modern geometry, confident negative space, flat vector-like finish, recognizable at tiny sizes, centered inside adaptive icon safe area. No letters, no newspaper illustration, no RSS arcs, no paper plane, no gradients, no metallic effects, no words or watermark.

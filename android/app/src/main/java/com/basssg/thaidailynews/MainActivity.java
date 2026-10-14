@@ -40,6 +40,8 @@ public class MainActivity extends Activity {
     void emit(String event,JSONObject detail){main.post(()->{if(web!=null)web.evaluateJavascript("window.dispatchEvent(new CustomEvent("+JSONObject.quote(event)+",{detail:"+detail+"}));",null);});}
     void tell(String text){try{emit("tdn-toast",new JSONObject().put("message",text));}catch(JSONException ignored){}}
     private void handleBack(){web.evaluateJavascript("window.TDN_BACK ? window.TDN_BACK() : false",result->{if(!"true".equals(result))finish();});}
+    // Android 13+ uses the OnBackInvokedCallback registered above; this is the API 26–32 fallback.
+    @android.annotation.SuppressLint("GestureBackNavigation")
     @Override public void onBackPressed(){handleBack();}
     @Override protected void onDestroy(){if(web!=null){web.removeJavascriptInterface("NativeNews");web.destroy();web=null;}super.onDestroy();}
     private void openExternal(String url){try{Uri uri=Uri.parse(url);if(!"https".equals(uri.getScheme())&&!"http".equals(uri.getScheme()))return;startActivity(new Intent(Intent.ACTION_VIEW,uri));}catch(Exception e){tell("ยังเปิดลิงก์ไม่ได้");}}

@@ -62,6 +62,12 @@ var TDCore = (function () {
       if(!it||!it.id||Date.parse(it.published_at)<now-72*3600000||/(?:^|\.)(?:facebook\.com|fb\.com|youtube\.com|tiktok\.com|vietnam\.vn|pinterest\.com)$/.test(it.host)||it.title.length>260)return;
       if(old[it.id])it=Object.assign({},it,{first_seen_at:old[it.id].first_seen_at||it.first_seen_at});
       if(map[it.id]&&map[it.id].excerpt&&!it.excerpt)it=Object.assign({},it,{excerpt:map[it.id].excerpt,snippet:map[it.id].excerpt});
+      it=Object.assign({},it);
+      if(/^google-/.test(it.adapter||'')){it.excerpt='';it.snippet='';}
+      else {it.excerpt=clean(it.excerpt).replace(/\s*The (?:post|po)[\s\S]*$/i,'').trim();it.snippet=it.excerpt;}
+      it.category_id=classify(it.title,it.excerpt,it.category_id);
+      var cat=categories.filter(function(c){return c.id===it.category_id;})[0]||categories[1];
+      it.category=cat.label;it.module=cat.id;
       map[it.id]=it;
     });
     var items=Object.keys(map).map(function(k){return map[k];});

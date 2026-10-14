@@ -7,6 +7,7 @@ var TD_SOURCE_DEFS=[
   {id:'google-politics',name:'Google News · การเมือง',home:'https://news.google.com',query:'การเมือง รัฐบาล when:1d',category:'politics',minutes:10},
   {id:'google-society',name:'Google News · สังคม',home:'https://news.google.com',query:'ข่าวสังคม ประเทศไทย when:1d',category:'society',minutes:10},
   {id:'google-crime',name:'Google News · อาชญากรรม',home:'https://news.google.com',query:'ข่าวอาชญากรรม ตำรวจ when:1d',category:'crime',minutes:10},
+  {id:'google-economy',name:'Google News · เศรษฐกิจ',home:'https://news.google.com',query:'ข่าวเศรษฐกิจ ประเทศไทย when:1d',category:'economy',minutes:10},
   {id:'google-tech',name:'Google News · เทคโนโลยี',home:'https://news.google.com',query:'เทคโนโลยี AI when:1d',category:'tech',minutes:15},
   {id:'infoquest',name:'InfoQuest',home:'https://www.infoquest.co.th',url:'https://www.infoquest.co.th/feed',category:'general',minutes:5},
   {id:'bangkok-th',name:'Bangkok Post',home:'https://www.bangkokpost.com',url:'https://www.bangkokpost.com/rss/data/thailand.xml',category:'general',minutes:15},
