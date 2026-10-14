@@ -52,7 +52,7 @@ public class NewsWidgetProvider extends AppWidgetProvider {
         RemoteViews view=new RemoteViews(c.getPackageName(),R.layout.widget);
         view.setInt(R.id.widget_root,"setBackgroundResource",light?R.drawable.widget_light:R.drawable.widget_dark);
         int text=Color.parseColor(light?"#172238":"#F0F1F4"),muted=Color.parseColor(light?"#737E8E":"#94A2B8");
-        view.setTextColor(R.id.widget_label,muted);view.setTextColor(R.id.widget_updated,muted);view.removeAllViews(R.id.widget_rows);
+        view.setTextColor(R.id.widget_label,muted);view.setTextColor(R.id.widget_updated,muted);view.setTextColor(R.id.widget_brand,Color.parseColor(light?"#927035":"#D6B775"));view.removeAllViews(R.id.widget_rows);
         if(compact){float density=c.getResources().getDisplayMetrics().density;view.setViewPadding(R.id.widget_root,Math.round(14*density),Math.round(10*density),Math.round(14*density),Math.round(10*density));view.setViewVisibility(R.id.widget_label,android.view.View.GONE);}
         int catIndex=Arrays.asList(CATEGORY_IDS).indexOf(category);String label=mode.equals("saved")?MODE_LABELS[2]:mode.equals("important")?MODE_LABELS[1]:MODE_LABELS[0];
         view.setTextViewText(R.id.widget_label,label+(catIndex>0?" · "+CATEGORY_LABELS[catIndex]:""));
