@@ -49,7 +49,7 @@ npm run preview
 
 `npm run build` สร้างไอคอน, GAS HTML, crypto bundle และสำเนา web assets สำหรับ Android จาก source หลัก ตัวทดสอบ Node ตรวจวันข่าว, URL, dedup, ลำดับความใหม่, ตัวกรองแจ้งเตือน และลายเซ็น ES256
 
-Android ใช้ Java 17, Gradle 8.13, AGP 8.11.1 และ compile/target SDK 36 Workflow `Android application` สร้าง release APK ที่เซ็นด้วยกุญแจประจำแอป พร้อม lint และ smoke test บน Android emulator ตรวจ API จริง หน้าอ่าน รายละเอียด บันทึก การตั้งค่า วิดเจ็ตสามขนาด และแจ้งเตือนทดสอบ
+Android ใช้ Java 17, Gradle 8.13, AGP 8.11.1 และ compile/target SDK 36 Workflow `Android application` สร้าง release APK ที่เซ็นด้วยกุญแจประจำแอป พร้อม lint และ smoke test บน Android emulator ตรวจ API จริง หน้าอ่าน รายละเอียด บันทึก การตั้งค่า ภาพข่าวผ่าน native AppWidgetHost สามขนาด การบันทึกตัวเลือกภาพแยกวิดเจ็ต ขนาด bitmap กรณีไม่มีภาพ และแจ้งเตือนทดสอบ
 
 ## ปรับ GAS
 

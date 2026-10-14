@@ -1,5 +1,18 @@
 # Verification · 2026-10-14
 
+## 2.2 · Android widget photos
+
+Release source: `cc8ebdcbd6e350506e2ddca5a0ca47bf648d3d16`. [Successful build, signing, lint and Android device check](https://github.com/BassSG/Thai_Daily_News/actions/runs/38578886297).
+
+- 17 Node tests passed. Android 15 emulator downloaded real publisher images from live GAS news and verified 320×200 thumbnails with bounded bitmap memory.
+- Bound SmallWidget, MediumWidget and LargeWidget through Android AppWidgetManager and rendered their updates in a native AppWidgetHost. Reviewed actual 2×2, 4×2 and 4×4 screenshots with photos in Midnight and Ivory; the small headline fits its available area.
+- Checked cached photos at compact, normal and expanded heights; photo opt-out and a story without image metadata retain readable headlines. The widget render path reads cached thumbnails without network calls.
+- Opened the actual native widget configuration screen, switched photos off, saved, and verified that only that widget's preference changed. Existing widget configurations default to showing photos.
+- Main news response returns before additional widget photo downloads. Story PendingIntents include a unique data URI so separate widgets cannot overwrite each other's destinations through request-code overlap.
+- Article, saved news, application settings, notification filtering, HTTPS validation and actual native notification posting passed. Debug preview and test helpers are excluded from the release APK.
+- GAS deployment 61 retains the existing endpoint and 5-minute ingestion trigger, with bootstrap disabled. Live snapshot verified 13 healthy feeds and publisher image URLs; no new paid image API was introduced.
+- Downloaded the public stable APK URL and matched it to the tested signed artifact: SHA-256 `27da5598f66c93109493c277153d9d5be99ee03dd9c00b61e587054a206975ac`. Signing certificate matches 2.1; versionCode increased to 20200.
+
 ## 2.1 · Publisher photographs
 
 Release source: `507a57fa69242a351b5015b03f188a33d3a96e77`. [Successful build and Android device check](https://github.com/BassSG/Thai_Daily_News/actions/runs/38560568484).
