@@ -42,6 +42,9 @@ public final class NewsRepository {
         }throw new IOException("Too many redirects");
     }
     public static JSONObject refresh(Context c,boolean notify)throws Exception{
+        return refresh(c,notify,true);
+    }
+    public static JSONObject refresh(Context c,boolean notify,boolean widgetPhotos)throws Exception{
         JSONObject old=cached(c),response=request(API+"?action=snapshot&_="+(System.currentTimeMillis()/300000L),null);
         if(!response.optBoolean("ok")||response.optJSONObject("snapshot")==null)throw new IOException("News unavailable");
         JSONObject snapshot=response.getJSONObject("snapshot");
@@ -51,7 +54,7 @@ public final class NewsRepository {
         java.nio.file.Files.move(temp.toPath(),dest.toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING,java.nio.file.StandardCopyOption.ATOMIC_MOVE);
         prefs(c).edit().putLong("last_success",System.currentTimeMillis()).apply();
         if(notify)notifyNew(c,old,snapshot);
-        NewsWidgetProvider.updateAll(c);NewsWidgetProvider.refreshPhotos(c);return response;
+        NewsWidgetProvider.updateAll(c);if(widgetPhotos)NewsWidgetProvider.refreshPhotos(c);return response;
     }
     static long timestamp(String s){try{return Instant.parse(s).toEpochMilli();}catch(Exception e){return 0;}}
     public static boolean matches(JSONObject article,JSONObject setting){
