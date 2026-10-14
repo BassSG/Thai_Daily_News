@@ -102,6 +102,7 @@ jobs:
             adb shell am instrument -w com.basssg.thaidailynews.test/com.basssg.thaidailynews.SmokeInstrumentation | tee smoke-results.txt
             mkdir -p device-qa
             adb pull /sdcard/Android/data/com.basssg.thaidailynews/files/qa/. device-qa/
+            adb logcat -d -v threadtime > device-qa/android-logcat.txt
             grep -q TDN_SMOKE_OK smoke-results.txt
             adb shell am start -n com.basssg.thaidailynews/.MainActivity
             adb shell am broadcast -n com.basssg.thaidailynews/.NotificationTestReceiver
