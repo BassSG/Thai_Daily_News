@@ -32,7 +32,7 @@ var TDCore = (function () {
   }
   function classify(title,excerpt,fallback) {
     var s=String(title).toLowerCase();
-    var rules={tech:/ปัญญาประดิษฐ์|เทคโนโลยี|\b(?:openai|chatgpt|gemini|nvidia|artificial intelligence|ai|cybersecurity|smartphone|iphone)\b/,crime:/จับกุม|อาชญากรรม|ฆาตกรรม|ยาเสพติด|ลักทรัพย์|ตำรวจ|คดีทุจริต|ยิงเสียชีวิต/,economy:/เศรษฐกิจ|อัตราดอกเบี้ย|เงินเฟ้อ|ตลาดหุ้น|หลักทรัพย์|หุ้นกู้|ซื้อขาย|สินเชื่อ|ธนาคาร|ราคาทอง|ราคาน้ำมัน|ภาวะตลาด|การเงิน|\b(?:inflation|economy|interest rate|stock market|imf|gdp|jpmorgan)\b/,politics:/รัฐบาล|นายกรัฐมนตรี|นายกฯ|ครม\.|รัฐสภา|เลือกตั้ง|พรรคการเมือง|คณะรัฐมนตรี|ซักฟอก|อภิปราย|\b(?:election|parliament)\b/};
+    var rules={tech:/ปัญญาประดิษฐ์|เทคโนโลยี|\b(?:openai|chatgpt|gemini|nvidia|artificial intelligence|ai|cybersecurity|smartphone|iphone)\b/,crime:/จับกุม|อาชญากรรม|ฆาตกรรม|ยาเสพติด|(?:^|[^ห])ลักทรัพย์|ตำรวจ|คดีทุจริต|ยิงเสียชีวิต/,economy:/เศรษฐกิจ|อัตราดอกเบี้ย|เงินเฟ้อ|ตลาดหุ้น|หลักทรัพย์|หุ้นกู้|ซื้อขาย|สินเชื่อ|ธนาคาร|ราคาทอง|ราคาน้ำมัน|ภาวะตลาด|การเงิน|\b(?:inflation|economy|interest rate|stock market|imf|gdp|jpmorgan)\b/,politics:/รัฐบาล|นายกรัฐมนตรี|นายกฯ|ครม\.|รัฐสภา|เลือกตั้ง|พรรคการเมือง|คณะรัฐมนตรี|ซักฟอก|อภิปราย|\b(?:election|parliament)\b/};
     if(fallback==='world')return fallback;
     for(var k in rules)if(rules[k].test(s))return k;
     return fallback&&fallback!=='general'?fallback:'society';
@@ -63,7 +63,7 @@ var TDCore = (function () {
       if(old[it.id])it=Object.assign({},it,{first_seen_at:old[it.id].first_seen_at||it.first_seen_at});
       if(map[it.id]&&map[it.id].excerpt&&!it.excerpt)it=Object.assign({},it,{excerpt:map[it.id].excerpt,snippet:map[it.id].excerpt});
       it=Object.assign({},it);
-      if(/^google-/.test(it.adapter||'')){it.excerpt='';it.snippet='';}
+      if(/^google-/.test(it.adapter||'')||host(it.url)==='news.google.com'){it.excerpt='';it.snippet='';}
       else {it.excerpt=clean(it.excerpt).replace(/\s*The (?:post|po)[\s\S]*$/i,'').trim();it.snippet=it.excerpt;}
       it.category_id=classify(it.title,it.excerpt,it.category_id);
       var cat=categories.filter(function(c){return c.id===it.category_id;})[0]||categories[1];
