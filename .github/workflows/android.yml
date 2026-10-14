@@ -105,7 +105,8 @@ jobs:
             if [ ${{ matrix.api }} -ge 33 ]; then adb shell pm grant com.basssg.thaidailynews android.permission.POST_NOTIFICATIONS; fi
             adb shell am instrument -w com.basssg.thaidailynews.test/com.basssg.thaidailynews.SmokeInstrumentation | tee smoke-results.txt
             mkdir -p device-qa
-            adb pull /sdcard/Android/data/com.basssg.thaidailynews/files/qa/. device-qa/
+            adb exec-out run-as com.basssg.thaidailynews tar -C files -cf - qa > device-qa.tar
+            tar -xf device-qa.tar -C device-qa/ --strip-components=1
             adb logcat -d -v threadtime > device-qa/android-logcat.txt
             grep -q TDN_SMOKE_OK smoke-results.txt
             adb shell am start -n com.basssg.thaidailynews/.MainActivity
@@ -118,7 +119,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: android-device-check
+          name: android-device-check-api-${{ matrix.api }}
           path: |
             device-qa/
             smoke-results.txt
