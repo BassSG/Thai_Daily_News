@@ -42,7 +42,7 @@ public final class NewsRepository {
         }throw new IOException("Too many redirects");
     }
     public static JSONObject refresh(Context c,boolean notify)throws Exception{
-        JSONObject old=cached(c),response=request(API+"?action=snapshot",null);
+        JSONObject old=cached(c),response=request(API+"?action=snapshot&_="+(System.currentTimeMillis()/300000L),null);
         if(!response.optBoolean("ok")||response.optJSONObject("snapshot")==null)throw new IOException("News unavailable");
         JSONObject snapshot=response.getJSONObject("snapshot");
         if(snapshot.optJSONArray("items")==null)throw new IOException("Invalid snapshot");

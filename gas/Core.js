@@ -32,7 +32,7 @@ var TDCore = (function () {
   }
   function classify(title,excerpt,fallback) {
     var s=String(title).toLowerCase();
-    var rules={tech:/ปัญญาประดิษฐ์|เทคโนโลยี|\b(?:openai|chatgpt|gemini|nvidia|artificial intelligence|ai|cybersecurity|smartphone|iphone)\b/,crime:/จับกุม|อาชญากรรม|ฆาตกรรม|ยาเสพติด|(?:^|[^ห])ลักทรัพย์|ตำรวจ|คดีทุจริต|ยิงเสียชีวิต/,economy:/เศรษฐกิจ|อัตราดอกเบี้ย|เงินเฟ้อ|ตลาดหุ้น|หลักทรัพย์|หุ้นกู้|ซื้อขาย|สินเชื่อ|ธนาคาร|ราคาทอง|ราคาน้ำมัน|ภาวะตลาด|การเงิน|\b(?:inflation|economy|interest rate|stock market|imf|gdp|jpmorgan)\b/,politics:/รัฐบาล|นายกรัฐมนตรี|นายกฯ|ครม\.|รัฐสภา|เลือกตั้ง|พรรคการเมือง|คณะรัฐมนตรี|ซักฟอก|อภิปราย|\b(?:election|parliament)\b/};
+    var rules={tech:/ปัญญาประดิษฐ์|เทคโนโลยี|\b(?:openai|chatgpt|gemini|nvidia|artificial intelligence|ai|cybersecurity|smartphone|iphone)\b/,crime:/จับกุม|อาชญากรรม|ฆาตกรรม|ยาเสพติด|(?:^|[^ห])ลักทรัพย์|ตำรวจ|คดีทุจริต|ยิงเสียชีวิต/,economy:/เศรษฐกิจ|ดอกเบี้ย|เงินเฟ้อ|ตลาดหุ้น|หลักทรัพย์|หุ้นกู้|ซื้อขาย|สินเชื่อ|ธนาคาร|ราคาทอง|ราคาน้ำมัน|ภาวะตลาด|การเงิน|\b(?:inflation|economy|interest rate|stock market|imf|gdp|jpmorgan)\b/,politics:/รัฐบาล|นายกรัฐมนตรี|นายกฯ|ครม\.|รัฐสภา|เลือกตั้ง|พรรคการเมือง|คณะรัฐมนตรี|ซักฟอก|อภิปราย|\b(?:election|parliament)\b/};
     if(fallback==='world')return fallback;
     for(var k in rules)if(rules[k].test(s))return k;
     return fallback&&fallback!=='general'?fallback:'society';
