@@ -5,7 +5,7 @@ import {build} from 'esbuild';
 const root=process.cwd();
 await fs.mkdir('assets',{recursive:true});
 for(const size of [96,192,512])await sharp('assets/logo-master.png').resize(size,size).png().toFile(`assets/icon-${size}.png`);
-await sharp('assets/logo-master.png').resize(410,410).extend({top:51,bottom:51,left:51,right:51,background:'#00183f'}).png().toFile('assets/icon-maskable-512.png');
+await sharp('assets/logo-master.png').resize(512,512).png().toFile('assets/icon-maskable-512.png');
 // Android status-bar icon is a purpose-built monochrome newspaper glyph.
 const badge='<svg width="96" height="96" xmlns="http://www.w3.org/2000/svg"><path fill="white" d="M20 14h56v68H20zm10 12v7h36v-7zm0 16v18h14V42zm22 0v6h14v-6zm0 12v6h14v-6zM30 68v5h36v-5z" fill-rule="evenodd"/></svg>';
 await sharp(Buffer.from(badge)).png().toFile('assets/badge-96.png');

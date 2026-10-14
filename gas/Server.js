@@ -67,6 +67,12 @@ function tdReadSnapshot_(){
 function tdSaveSnapshot_(snap){
   var props=tdProps_(),packed=tdPack_(snap);
   while(packed.length>120000&&snap.items.length>40){snap.items=snap.items.slice(0,-30);packed=tdPack_(snap);}
+  snap.stats.items_total=snap.items.length;
+  var retained={};snap.items.forEach(function(it){retained[it.id]=true;});
+  snap.topIds=(snap.topIds||[]).filter(function(id){return retained[id];});
+  snap.brief.daily_bullets=(snap.brief.daily_bullets||[]).filter(function(it){return retained[it.id];});
+  snap.brief.top_stories=(snap.brief.top_stories||[]).filter(function(it){return retained[it.id];});
+  packed=tdPack_(snap);
   if(packed.length>120000)throw new Error('snapshot too large');
   var old=JSON.parse(props.getProperty('TD_SNAPSHOT_META')||'null'),g=Utilities.getUuid().slice(0,8),chunks={};
   for(var i=0;i<packed.length;i+=7000)chunks['TD_SNAP_'+g+'_'+Math.floor(i/7000)]=packed.slice(i,i+7000);
