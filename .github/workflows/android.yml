@@ -81,6 +81,7 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel_7
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -dns-server 8.8.8.8
           disable-animations: true
           script: |
             adb install artifacts/app-debug.apk
