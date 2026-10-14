@@ -120,7 +120,7 @@
   addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;});
   addEventListener('appinstalled',()=>{installPrompt=null;$('#installDialog').close();toast('ติดตั้ง Thai Daily News แล้ว');});
   addEventListener('tdn-notification-permission',event=>{preferences.enabled=!!event.detail.granted;persistPreferences();toast(preferences.enabled?'เปิดการแจ้งเตือนข่าวใหม่แล้ว':'ยังไม่ได้อนุญาตการแจ้งเตือน');});
-  addEventListener('tdn-open-article',event=>openArticle(event.detail.id));
+  addEventListener('tdn-open-article',event=>{$$('dialog[open]').forEach(dialog=>dialog.close());openArticle(event.detail.id);});
   addEventListener('tdn-toast',event=>toast(event.detail.message));
   document.addEventListener('error',event=>{const image=event.target;if(!image.matches?.('img[data-news-image]'))return;state.failedImages.add(image.getAttribute('src'));const figure=image.closest('.story-photo');if(figure)figure.hidden=true;image.closest('.hero-card')?.classList.remove('has-image');image.closest('.story-open')?.classList.remove('has-photo');},true);
   document.addEventListener('click',async event=>{
