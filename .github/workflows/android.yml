@@ -100,9 +100,9 @@ jobs:
             adb install artifacts/app-debug-androidTest.apk
             adb shell pm grant com.basssg.thaidailynews android.permission.POST_NOTIFICATIONS
             adb shell am instrument -w com.basssg.thaidailynews.test/com.basssg.thaidailynews.SmokeInstrumentation | tee smoke-results.txt
-            grep -q TDN_SMOKE_OK smoke-results.txt
             mkdir -p device-qa
             adb pull /sdcard/Android/data/com.basssg.thaidailynews/files/qa/. device-qa/
+            grep -q TDN_SMOKE_OK smoke-results.txt
             adb shell am start -n com.basssg.thaidailynews/.MainActivity
             adb shell am broadcast -n com.basssg.thaidailynews/.NotificationTestReceiver
             sleep 2
