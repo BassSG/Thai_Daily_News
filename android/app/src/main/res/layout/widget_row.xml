@@ -1,0 +1,4 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/story_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingTop="7dp" android:paddingBottom="5dp">
+  <TextView android:id="@+id/story_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:textColor="#F0F1F4" android:lineSpacingExtra="2dp" android:maxLines="2" android:ellipsize="end"/>
+  <TextView android:id="@+id/story_source" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="8sp" android:textColor="#94A2B8" android:maxLines="1" android:ellipsize="end" android:layout_marginTop="3dp"/>
+</LinearLayout>

@@ -1,0 +1,17 @@
+{
+  "name": "thai-daily-news",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "preview": "node scripts/serve.mjs"
+  },
+  "devDependencies": {
+    "@noble/curves": "1.9.7",
+    "@noble/hashes": "1.8.0",
+    "esbuild": "0.25.12",
+    "sharp": "0.35.5"
+  }
+}

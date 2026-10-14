@@ -1,0 +1,5 @@
+{
+  "id":"/Thai_Daily_News/","name":"Thai Daily News","short_name":"Thai Daily","description":"ข่าวสำคัญในไทยและรอบโลก ในพื้นที่อ่านที่เป็นของคุณ","lang":"th","start_url":"./","scope":"./","display":"standalone","background_color":"#080f1c","theme_color":"#09152a","orientation":"any","categories":["news"],
+  "icons":[{"src":"assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"assets/icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}],
+  "shortcuts":[{"name":"ข่าวล่าสุด","url":"./?view=latest","icons":[{"src":"assets/icon-192.png","sizes":"192x192"}]},{"name":"ข่าวที่บันทึกไว้","url":"./?view=saved","icons":[{"src":"assets/icon-192.png","sizes":"192x192"}]}]
+}

@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><script>
+'use strict';
+var bridgeToken='<?= token ?>';
+window.top.postMessage({channel:'tdn-bridge-v2',ready:true,token:bridgeToken},'*');
+addEventListener('message',function(event){
+  var allowed=['https://basssg.github.io','https://appassets.androidplatform.net','http://127.0.0.1:4173','http://localhost:4173'];
+  var data=event.data;
+  if(allowed.indexOf(event.origin)<0||!data||data.channel!=='tdn-bridge-v2'||data.token!==bridgeToken||typeof data.requestId!=='string'||!data.payload)return;
+  var target=event.source,origin=event.origin,id=data.requestId;
+  function reply(result){target.postMessage({channel:'tdn-bridge-v2',token:bridgeToken,requestId:id,result:result},origin);}
+  google.script.run.withSuccessHandler(reply).withFailureHandler(function(){reply({ok:false,error:'การเชื่อมต่อยังไม่พร้อม กรุณาลองอีกครั้ง'});}).apiCommand(data.payload);
+});
+</script></body></html>

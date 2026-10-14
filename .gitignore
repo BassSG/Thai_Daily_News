@@ -1,0 +1,12 @@
+node_modules/
+.private/
+.clasp.json
+.local/
+android/.gradle/
+android/**/build/
+android/local.properties
+*.jks
+*.keystore
+*.p12
+gas/PrivateBootstrap.js
+.DS_Store

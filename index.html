@@ -1,128 +1,60 @@
-<!DOCTYPE html>
-<html lang="th">
+<!doctype html>
+<html lang="th" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
-    <base target="_top">
-    <title>Thai-News</title>
-
-    <!-- ส่วน icon สำหรับแท็บและ shortcut (ไม่แสดงในเนื้อหาของหน้าเว็บ) -->
-    <link rel="icon" type="image/png" href="https://s15-kling.klingai.com/kimg/EMXN1y8qbwoGdXBsb2FkEg55bGFiLXN0dW50LXNncBpVc2UvYWlfcG9ydGFsX3NncF9tbXVfdHh0MmltZ19haXdlYl92MjEvNmUyN2I3ZjUtNGY3Zi00Y2FjLWJiMzEtNDI1ZTk1NWI0MThkX2ltYWdlLnBuZw:720x435.webp?x-kcdn-pid=112372">
-    <link rel="apple-touch-icon" href="https://s15-kling.klingai.com/kimg/EMXN1y8qbwoGdXBsb2FkEg55bGFiLXN0dW50LXNncBpVc2UvYWlfcG9ydGFsX3NncF9tbXVfdHh0MmltZ19haXdlYl92MjEvNmUyN2I3ZjUtNGY3Zi00Y2FjLWJiMzEtNDI1ZTk1NWI0MThkX2ltYWdlLnBuZw:720x435.webp?x-kcdn-pid=112372">
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Trip-Planner">
-    <meta name="theme-color" content="#4285f4">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <style>
-        /* Reset CSS */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html, body {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            position: fixed;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            background-color: #f5f5f5;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, 
-                         Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
-        
-        /* โลโก้เว็บไซต์ที่แสดงในหน้าเว็บ */
-        
-        #app-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 0;
-            z-index: 1;
-            overflow: hidden;
-        }
-
-        /* Default: มือถือ */
-        .app-splash {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #566573;
-            background-image: url("https://s15-kling.klingai.com/kimg/EMXN1y8qbwoGdXBsb2FkEg55bGFiLXN0dW50LXNncBpVc2UvYWlfcG9ydGFsX3NncF9tbXVfdHh0MmltZ19haXdlYl92MjEvNWE5ZmZhMTktM2ZhMy00MzIyLThhMjgtZDMyOGZlYTUwNmMyX2ltYWdlLnBuZw:720x435.webp?x-kcdn-pid=112372");
-            background-repeat: no-repeat;
-            background-position: center center;
-            background-size: cover;
-            z-index: 9999;
-            transition: opacity 0.5s ease-out;
-        }
-
-        /* Desktop: จอกว้าง >= 768px */
-        @media (min-width: 768px) {
-            .app-splash {
-                background-image: url("https://s15-kling.klingai.com/kimg/EMXN1y8qbwoGdXBsb2FkEg55bGFiLXN0dW50LXNncBpVc2UvYWlfcG9ydGFsX3NncF9tbXVfdHh0MmltZ19haXdlYl92MjEvY2FkZTg2YTEtYTJjYi00NjZmLWFjYjYtM2U3MzJlMjY0MmEwX2ltYWdlLnBuZw:720x435.webp?x-kcdn-pid=112372");
-            }
-        }
-
-        @supports (padding: max(0px)) {
-            body {
-                padding-top: max(0px, env(safe-area-inset-top));
-                padding-bottom: max(0px, env(safe-area-inset-bottom));
-                padding-left: max(0px, env(safe-area-inset-left));
-                padding-right: max(0px, env(safe-area-inset-right));
-            }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#09152a">
+  <meta name="description" content="ข่าวสำคัญในไทยและรอบโลก ในพื้นที่อ่านที่เป็นของคุณ">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Thai Daily">
+  <title>Thai Daily News — ข่าวที่สำคัญกับคุณ</title>
+  <link rel="icon" href="assets/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="app.css">
 </head>
 <body>
-
-    <div class="app-splash" id="splash-screen"></div>
-
-    <iframe id="app-container" 
-        src="https://script.google.com/macros/s/AKfycbwatsqO1HW7xmIbfJgm6P-4otzfNbvGeVdcVjflwHZxzbDM34o4ul_Fe3Wfy-NuKVlaoQ/exec">
-    </iframe>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                const splash = document.getElementById('splash-screen');
-                splash.style.opacity = '0';
-                setTimeout(function() {
-                    splash.style.display = 'none';
-                }, 500);
-            }, 2000);
-        });
-        
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(function(err) {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
-        }
-
-        document.body.addEventListener('touchmove', function(e) {
-            if (e.target.id !== 'app-container') {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        document.addEventListener('gesturestart', function(e) {
-            e.preventDefault();
-        });
-    </script>
-</body>
-</html>
+  <a class="skip-link" href="#feed">ไปยังรายการข่าว</a>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="เมนูหลัก">
+      <a class="brand" href="#" aria-label="Thai Daily News หน้าหลัก"><img src="assets/icon-192.png" alt="" width="48" height="48"><span><b>THAI DAILY</b><small>YOUR DAILY PERSPECTIVE</small></span></a>
+      <div class="sidebar-caption">พื้นที่ข่าวของคุณ</div>
+      <nav id="desktopNav" class="main-nav"></nav>
+      <div class="sidebar-caption">หมวดข่าว</div><nav id="categoryNav" class="category-nav"></nav>
+      <div class="sidebar-bottom"><div class="edition-note"><span class="edition-glyph">✦</span><b>รู้ทันโลก ในจังหวะของคุณ</b><p>รวมข่าวสำคัญจากหลายสำนัก<br>เลือกอ่านสิ่งที่มีความหมายกับคุณ</p></div>
+      <button class="nav-item" data-action="settings"><span data-icon="settings"></span>ปรับแต่งแอป</button><span class="version-label">THAI DAILY NEWS · 2.0</span></div>
+    </aside>
+    <div class="main-area">
+      <header class="topbar">
+        <a class="mobile-brand" href="#" aria-label="Thai Daily News"><img src="assets/icon-192.png" width="38" height="38" alt=""><b>THAI DAILY<span>NEWS & PERSPECTIVE</span></b></a>
+        <div class="edition-date"><span id="editionDate"></span><span class="date-divider"></span><span>THE DAILY EDITION</span></div>
+        <div class="header-actions"><button class="icon-button" id="themeButton" aria-label="เปลี่ยนธีม"><span data-icon="sun"></span></button><button class="icon-button" data-action="settings" aria-label="ตั้งค่าการแจ้งเตือน"><span data-icon="bell"></span><i id="notifyDot" hidden></i></button><button class="install-button" id="installButton"><span data-icon="download"></span><span>ติดตั้งแอป</span></button></div>
+      </header>
+      <main id="mainContent">
+        <section class="page-heading"><div><div class="eyebrow"><span class="gold-line"></span>YOUR WORLD, IN FOCUS</div><h1 id="pageTitle">วันนี้ มีอะไรสำคัญ</h1><p id="pageSubtitle">ข่าวไทยและรอบโลก คัดมาให้คุณติดตามในที่เดียว</p></div><button class="refresh-button" id="refreshButton"><span data-icon="refresh"></span><span>อัปเดตข่าว</span></button></section>
+        <div class="feed-toolbar"><label class="search-field"><span data-icon="search"></span><input id="searchInput" type="search" placeholder="ค้นหาหัวข้อ สำนักข่าว หรือเรื่องที่สนใจ" autocomplete="off" aria-label="ค้นหาข่าว"><kbd>/</kbd></label><select id="timeFilter" aria-label="ช่วงเวลาข่าว"><option value="24">24 ชั่วโมง</option><option value="48">48 ชั่วโมง</option><option value="72">3 วันล่าสุด</option></select></div>
+        <div class="category-chips" id="categoryChips" aria-label="เลือกหมวดข่าว"></div>
+        <div class="status-row"><span class="freshness" id="freshness"><i></i>กำลังเชื่อมต่อข่าวล่าสุด</span><span id="newsCount"></span></div>
+        <div class="reading-layout"><div class="feed-column"><div id="heroContainer"></div><section id="feed" aria-live="polite" aria-busy="true"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></section><button id="loadMore" class="load-more" hidden>อ่านข่าวเพิ่มเติม <span data-icon="arrow-down"></span></button></div>
+          <aside class="right-rail" aria-label="ข่าวที่น่าติดตาม"><section class="rail-card"><div class="section-label"><span data-icon="trending"></span>จับตาประเด็น</div><div id="topStories" class="top-stories"></div></section><section class="rail-card quiet-card"><span class="quiet-symbol">✦</span><h3>พื้นที่อ่านที่เป็นของคุณ</h3><p>บันทึกข่าวที่สนใจ แล้วกลับมาอ่านต่อเมื่อพร้อม</p><button class="text-button" data-view="saved">ไปยังข่าวที่บันทึกไว้ <span data-icon="arrow"></span></button></section><section class="source-note"><b>หลายแหล่งข่าว หลายมุมมอง</b><p>แสดงหัวข้อและข้อความย่อจากฟีด พร้อมลิงก์กลับสำนักข่าวต้นฉบับ</p><button class="text-button" id="sourcesButton">ดูสถานะแหล่งข่าว <span data-icon="arrow"></span></button></section></aside>
+        </div>
+        <footer class="page-footer"><b>THAI DAILY NEWS</b><span>อ่านอย่างเข้าใจ มองโลกอย่างรอบด้าน</span></footer>
+      </main>
+    </div>
+  </div>
+  <nav class="bottom-nav" id="bottomNav" aria-label="เมนูบนมือถือ"></nav>
+  <div id="drawerBackdrop" class="drawer-backdrop" hidden></div>
+  <aside id="articleDrawer" class="article-drawer" role="dialog" aria-modal="true" aria-label="รายละเอียดข่าว" hidden><div class="drawer-top"><span class="eyebrow">THE STORY</span><button class="icon-button" id="closeArticle" aria-label="ปิดรายละเอียด"><span data-icon="close"></span></button></div><div id="articleContent"></div></aside>
+  <dialog id="settingsDialog" class="settings-dialog"><div class="dialog-heading"><div><span class="eyebrow">MAKE IT YOURS</span><h2>ปรับแต่งพื้นที่ข่าว</h2></div><button class="icon-button" data-close-dialog aria-label="ปิดการตั้งค่า"><span data-icon="close"></span></button></div><div class="dialog-body">
+    <section class="setting-section"><div class="setting-title"><span data-icon="bell"></span><h3>การแจ้งเตือนข่าวใหม่</h3></div><p>เลือกเรื่องที่อยากรู้ แล้วให้ข่าวสำคัญมาหาคุณ</p><button class="primary-button wide" id="enableNotifications"><span data-icon="bell"></span>เปิดการแจ้งเตือน</button><p class="setting-hint" id="notificationStatus">คุณเลือกเปิดหรือปิดได้ทุกเมื่อ</p><div id="notifyCategories" class="preference-chips"></div><label class="toggle-row"><span><b>เฉพาะข่าวสำคัญ</b><small>ลดการรบกวนจากข่าวทั่วไป</small></span><input type="checkbox" id="importantOnly" role="switch"></label><label class="toggle-row"><span><b>พักการแจ้งเตือนตอนกลางคืน</b><small>เวลา 22:00–07:00 น.</small></span><input type="checkbox" id="quietHours" role="switch" checked></label><div class="setting-actions"><button class="secondary-button" id="testNotification">ทดสอบการแจ้งเตือน</button><button class="text-button muted" id="disableNotifications">ปิดการแจ้งเตือน</button></div></section>
+    <section class="setting-section" id="widgetSection"><div class="setting-title"><span data-icon="widget"></span><h3>ข่าวบนหน้าจอหลัก Android</h3></div><p>เลือกขนาด แล้วเลือกหมวดข่าวในหน้าตั้งค่าวิดเจ็ต แต่ละชิ้นตั้งค่าต่างกันได้</p><div class="widget-options"><button class="widget-choice" data-widget="small"><div class="widget-mini small"><i></i><b></b><span></span></div><strong>กะทัดรัด</strong><small>2 × 2 · ข่าวเด่นหนึ่งเรื่อง</small></button><button class="widget-choice" data-widget="medium"><div class="widget-mini medium"><i></i><b></b><span></span><span></span></div><strong>แถบข่าว</strong><small>4 × 2 · อ่านได้หลายเรื่อง</small></button><button class="widget-choice" data-widget="large"><div class="widget-mini large"><i></i><b></b><span></span><span></span><span></span></div><strong>รายการใหญ่</strong><small>4 × 4 · ติดตามได้เต็มตา</small></button></div><p class="setting-hint" id="widgetHint">วิดเจ็ตใช้กับแอป Android เลือกข่าวล่าสุด ข่าวสำคัญ หรือข่าวที่บันทึกไว้ได้ และปรับขนาดต่อบนหน้าจอหลักได้</p></section>
+    <section class="setting-section"><div class="setting-title"><span data-icon="palette"></span><h3>บรรยากาศการอ่าน</h3></div><div class="theme-options"><button data-theme-choice="dark" class="theme-choice"><i class="theme-swatch dark"></i>Midnight</button><button data-theme-choice="light" class="theme-choice"><i class="theme-swatch light"></i>Ivory</button></div></section>
+    <section class="setting-section"><div class="setting-title"><span data-icon="download"></span><h3>แอปของคุณ ทุกหน้าจอ</h3></div><p id="installDescription">ติดตั้งบนคอมพิวเตอร์เพื่อเปิดในหน้าต่างแอป หรือดาวน์โหลด Android สำหรับการแจ้งเตือนเบื้องหลังและวิดเจ็ต</p><a class="secondary-button wide" id="apkDownload" href="https://github.com/BassSG/Thai_Daily_News/releases/latest/download/Thai-Daily-News-2.0.0.apk" target="_blank" rel="noopener"><span data-icon="android"></span>ดาวน์โหลดแอป Android (.apk)</a><button class="text-button" id="desktopInstall">วิธีติดตั้งบนคอมพิวเตอร์ <span data-icon="arrow"></span></button></section>
+    <section class="setting-section source-settings"><div class="setting-title"><span data-icon="globe"></span><h3>แหล่งข่าวและการอัปเดต</h3></div><div id="sourceHealth"></div><small>การแจ้งเตือนและวิดเจ็ตบน Android อัปเดตตามงานเบื้องหลังของระบบ โดยปกติเริ่มที่รอบประมาณ 15 นาที และอาจช้าลงขณะประหยัดแบตเตอรี่</small></section>
+    <div class="app-about"><img src="assets/icon-192.png" alt="" width="44" height="44"><div><b>Thai Daily News</b><span>เวอร์ชัน 2.0 · ข่าวที่สำคัญกับคุณ</span></div></div>
+  </div></dialog>
+  <dialog id="installDialog" class="install-dialog"><div class="dialog-heading"><h2>Thai Daily บนหน้าจอของคุณ</h2><button class="icon-button" data-close-dialog aria-label="ปิด"><span data-icon="close"></span></button></div><div class="dialog-body"><img class="install-logo" src="assets/icon-512.png" width="96" height="96" alt="Thai Daily News"><p id="installInstructions"></p><button class="primary-button wide" id="installNow">ติดตั้งแอป</button><a class="secondary-button wide" href="https://github.com/BassSG/Thai_Daily_News/releases/latest/download/Thai-Daily-News-2.0.0.apk" target="_blank" rel="noopener">ดาวน์โหลด Android พร้อมวิดเจ็ต</a></div></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="config.js"></script><script src="app.js" defer></script>
+</body></html>
