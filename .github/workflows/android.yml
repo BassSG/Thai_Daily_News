@@ -18,6 +18,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
+      - uses: android-actions/setup-android@v3
       - name: Restore application signing identity
         env:
           KEYSTORE: ${{ secrets.TDN_KEYSTORE_B64 }}
@@ -62,6 +63,7 @@ jobs:
         with:
           name: android-application
           path: artifacts
+      - uses: android-actions/setup-android@v3
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
