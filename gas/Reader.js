@@ -3,6 +3,8 @@ var TDReader=(function(){
   function lead(html,title){
     var text=String(html||'').slice(0,150000).replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,'').replace(/<\/(?:p|div|li|h[1-6])\s*>|<br\s*\/?>/gi,'\n');
     text=text.replace(/\s*The post[\s\S]*$/i,'');
+    var entities={hellip:'…',ndash:'–',mdash:'—',lsquo:'‘',rsquo:'’',ldquo:'“',rdquo:'”'};
+    text=text.replace(/&(hellip|ndash|mdash|lsquo|rsquo|ldquo|rdquo);/gi,function(_,key){return entities[key.toLowerCase()];});
     var headline=TDCore.clean(title),parts=text.split(/\n+/).map(function(p){return TDCore.clean(p);}).filter(function(p){return p.length>20&&p!==headline&&!/^(?:อ่านต่อ|อ่านเพิ่มเติม|ติดตาม|แชร์|Advertisement|Read more|Subscribe|Sign up)/i.test(p);});
     text=parts.join('\n\n').trim();
     if(text.length<=1200)return text;

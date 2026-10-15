@@ -108,7 +108,7 @@ var TDCore = (function () {
       if(map[it.id]&&map[it.id].excerpt&&!it.excerpt)it=Object.assign({},it,{excerpt:map[it.id].excerpt,snippet:map[it.id].excerpt});
       it=Object.assign({},it);
         if(map[it.id]&&map[it.id].metadata_checked_at&&!it.metadata_checked_at)it.metadata_checked_at=map[it.id].metadata_checked_at;
-        if(map[it.id]&&(map[it.id].reading_text||'').length>(it.reading_text||'').length){it.reading_text=map[it.id].reading_text;it.reading_origin=map[it.id].reading_origin;}
+        if(map[it.id]&&(!it.reading_text||map[it.id].reading_origin==='publisher'&&it.reading_origin==='rss'&&(map[it.id].reading_text||'').length>it.reading_text.length)){it.reading_text=map[it.id].reading_text;it.reading_origin=map[it.id].reading_origin;}
       if(map[it.id]&&map[it.id].image_url&&!it.image_url){it.image_url=map[it.id].image_url;it.image_origin=map[it.id].image_origin;}
       if(map[it.id]&&map[it.id].image_checked_at&&!it.image_checked_at)it.image_checked_at=map[it.id].image_checked_at;
       if(/^google-/.test(it.adapter||'')||host(it.url)==='news.google.com'){it.excerpt='';it.snippet='';it.reading_text='';}

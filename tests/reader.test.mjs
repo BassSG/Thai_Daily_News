@@ -14,6 +14,7 @@ test('refresh preserves richer text and summary hashes follow source facts',()=>
  const now=Date.now(),source={id:'infoquest',name:'InfoQuest',home:'https://www.infoquest.co.th',category:'general'},a=core.normalize({title:'รัฐบาลประกาศมาตรการช่วยเหลือประชาชน',url:'https://www.infoquest.co.th/news/1',published:new Date(now).toISOString(),excerpt:'รายละเอียดจากสำนักข่าวที่มีมากกว่าพาดหัว'},source,now);a.reading_text='เนื้อหาย่อหน้าที่หนึ่งจากสำนักข่าวซึ่งมีข้อเท็จจริงเพิ่มเติม';a.metadata_checked_at=new Date(now).toISOString();
  const first=core.merge([],[a],now)[0],second=core.merge([first],[{...a,reading_text:''}],now)[0];assert.equal(second.reading_text,first.reading_text);assert.equal(second.content_hash,first.content_hash);
  const changed=core.merge([first],[{...a,reading_text:a.reading_text+' และมีการประกาศพื้นที่เพิ่มเติมในวันนี้'}],now)[0];assert.notEqual(changed.content_hash,first.content_hash);
+ const corrected=core.merge([changed],[{...a,reading_text:'สำนักข่าวแก้ไขรายละเอียดให้สั้นลง'}],now)[0];assert.equal(corrected.reading_text,'สำนักข่าวแก้ไขรายละเอียดให้สั้นลง');
  const google=core.merge([],[{...a,adapter:'google-th',reading_text:'พาดหัวข่าวคนละข่าวจากรายการ Google'}],now)[0];assert.equal(google.reading_text,'');
 });
 test('a Google refresh cannot replace the same publisher story with a headline-only record',()=>{
