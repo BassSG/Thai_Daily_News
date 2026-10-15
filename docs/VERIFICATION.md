@@ -1,5 +1,18 @@
 # Verification · 2026-10-14
 
+## 2.4 · Intelligent alerts and Live News Pulse
+
+Release source: `31cbf41ecd53e0c6a8d778ae74a624f6996a1ae8`; TMD feed compatibility follow-up: `d9452ff1b771ba0cecf23d91b5c592bd0e792b8e`. [Successful build, signing, release lint and Android 11/15 device checks](https://github.com/BassSG/Thai_Daily_News/actions/runs/38675114625).
+
+- Rebuilt the web and Android reading experience around Today, Must Know, Trending, Latest and Saved views. Reviewed the live desktop layout plus Android home, settings and all three native widget sizes.
+- News is grouped into topic signals: breaking, major, trending, rising and latest. Default alerts accept breaking and major only; international stories require a high-impact major or breaking signal. Quiet hours still allow genuine breaking alerts.
+- Verified the live GAS snapshot at version 2.4.0 with unique signal counts and topic de-duplication. Deployment 65 retains the existing endpoint and 5-minute trigger and monitors 15 RSS feeds, including the official TMD warning and earthquake feeds.
+- The TMD earthquake adapter consumes only the newest channel-timestamped record. Undated archive records and warnings older than 72 hours are ignored so they cannot produce stale alerts.
+- 20 Node tests passed, including corroborated Thai policy news, routine-news suppression, major international emergencies, minor overseas earthquakes, notification category filters, dates, URL safety, duplicate handling and publisher images.
+- Android 11/API 30 and Android 15/API 35 device checks passed. Android uses separate channels for breaking and major news, de-duplicates topic notifications, observes quiet hours for non-breaking items and refreshes stale data when the app resumes.
+- APK versionCode 20400/versionName 2.4.0 uses the existing signing certificate SHA-256 `b61ab53da8023a7f8b5511dd964ea904934d1b6b4adb528ea5f4090c98b74fb2`. The public stable and versioned APKs both match SHA-256 `aa6d6bd86f4ec6863cd90fa09c80f889d0ce6dfc9d3692c74bc4133b69d45137`.
+- No Brave or other paid news/image API was introduced. The existing optional AI-summary configuration and its daily cap remain separate from RSS ingestion and alerts.
+
 ## 2.3 · Browse news inside Android widgets
 
 Release source: `11dc7a719563e3f4da70d728854bf938740de893`. [Successful build, signing, release lint and both device checks](https://github.com/BassSG/Thai_Daily_News/actions/runs/38594286781).
