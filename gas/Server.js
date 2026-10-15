@@ -1,5 +1,5 @@
 /* Thai Daily News 2 — uses the existing GAS project and existing OpenRouter secret. */
-var TD_VERSION='2.4.0';
+var TD_VERSION='2.5.0';
 var TD_WEB='https://basssg.github.io/Thai_Daily_News/';
 var TD_GAS='https://script.google.com/macros/s/AKfycbwatsqO1HW7xmIbfJgm6P-4otzfNbvGeVdcVjflwHZxzbDM34o4ul_Fe3Wfy-NuKVlaoQ/exec';
 var TD_SOURCE_DEFS=[

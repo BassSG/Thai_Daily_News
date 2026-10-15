@@ -40,6 +40,7 @@ var TDCore = (function () {
   function scopeOf(item) {
     var s=String(item.title||'').toLowerCase();
     if(/ไทย|ประเทศไทย|กรุงเทพ|นายกฯ|นายกรัฐมนตรี|รัฐบาลไทย|ครม\.|รัฐสภา|สภาฯ|กนง\.|ธปท\.|เงินบาท|จังหวัด|อำเภอ|กรมอุตุ|ปภ\.|กทม\./i.test(s))return 'thailand';
+    if(/ซาอุ|ศรีลังกา|กัมพูชา|มาเลเซีย|สิงคโปร์|ปากีสถาน|บังกลาเทศ|\b(?:saudi|sri lanka|cambodia|malaysia|singapore|pakistan|bangladesh)\b/i.test(s))return 'world';
     if(item.category_id==='world'||/สงคราม|หยุดยิง|โจมตี|ขีปนาวุธ|นิวเคลียร์|สหรัฐฯ|เฟด|ดาวโจนส์|แนสแด็ก|nasdaq|วอลล์สตรีท|รัสเซีย|ยูเครน|จีน|ญี่ปุ่น|เกาหลี|เมียนมา|พม่า|เวียดนาม|อินเดีย|อินโดนีเซีย|ฟิลิปปินส์|อิสราเอล|อิหร่าน|ตะวันออกกลาง|ยุโรป|อาเซียน|\b(?:war|ceasefire|airstrike|missile|united states|federal reserve|wall street|russia|ukraine|israel|iran|china|japan|europe|myanmar|vietnam|india|indonesia|philippines)\b/i.test(s))return 'world';
     return item.language==='th'?'thailand':'world';
   }
@@ -56,6 +57,7 @@ var TDCore = (function () {
   }
   function impactOf(item) {
     var s=String(item.title||'');
+    if(/ฉากทัศน์|บทวิเคราะห์|วิเคราะห์(?:สถานการณ์|แนวโน้ม)|ย้อนรอย|ย้อน(?:อดีต|ประวัติ)|บทเรียนจาก|\b(?:opinion|analysis|anniversary|what if)\b/i.test(s))return 1;
     var quake=s.match(/(?:ขนาด|magnitude)\s*([0-9]+(?:\.[0-9]+)?)/i);if(quake&&Number(quake[1])<5)return 1;
     var noise=/รีบเลย|เลขเด็ด|ดูดวง|ผลบอล|ดารา|เปิดวาร์ป|ชาวเน็ต|ไวรัล|สุดช็อก|ราคาทองวันนี้|ภาวะตลาด|stock focus|สรุปปริมาณการซื้อขาย|กวาดรางวัล|คว้ารางวัล|เปิดตัวสินค้า|โปรโมชั่น/i.test(s);
     if(noise)return 0;
@@ -66,7 +68,7 @@ var TDCore = (function () {
     return 1;
   }
   function signalOf(item,now) {
-    var hours=Math.max(0,(now-Date.parse(item.published_at))/3600000),impact=item.impact||0,sources=item.source_count||1,scope=item.scope||scopeOf(item),signal='latest',level='none';
+    var hours=Math.max(0,(now-Date.parse(item.published_at))/3600000),impact=item.impact||0,sources=item.source_count||1,scope=scopeOf(item),signal='latest',level='none';
     var explicit=/^(?:ด่วน|breaking)|ประกาศเตือน|เตือนภัย|อพยพ|เกิดเหตุ|มติ(?:ครม\.| กนง\.)|ยุบสภา|ลาออก|\b(?:breaking|evacuation|state of emergency)\b/i.test(item.title||'');
     var decision=/มติ|ผลเลือกตั้ง|ขึ้นดอกเบี้ย|ลดดอกเบี้ย|ยุบสภา|ลาออก|ประกาศใช้|มีผลบังคับ|จีดีพี|gdp|\b(?:decision|election result|resigns|takes effect)\b/i.test(item.title||'');
     if((hours<=3&&impact>=5)||(hours<=2&&impact>=4&&(explicit||sources>=2))){signal='breaking';level='breaking';}

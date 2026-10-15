@@ -1,5 +1,5 @@
 {
-  "id":"/Thai_Daily_News/","name":"Thai Daily News","short_name":"Thai Daily","description":"ข่าวไทยที่ควรรู้ ข่าวใหญ่รอบโลก และ Alert ที่คัดแล้ว","lang":"th","start_url":"./","scope":"./","display":"standalone","background_color":"#f2f0ea","theme_color":"#f2f0ea","orientation":"any","categories":["news"],
+  "id":"/Thai_Daily_News/","name":"Thai Daily News","short_name":"Thai Daily","description":"พื้นที่ข่าวส่วนตัวของคุณ ข่าวไทยที่ควรรู้ และเรื่องใหญ่จากทั่วโลก","lang":"th","start_url":"./","scope":"./","display":"standalone","background_color":"#f6f7f9","theme_color":"#f6f7f9","orientation":"any","categories":["news"],
   "icons":[{"src":"assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"assets/icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}],
   "shortcuts":[{"name":"ด่วนและข่าวใหญ่","url":"./?view=alerts","icons":[{"src":"assets/icon-192.png","sizes":"192x192"}]},{"name":"กระแสที่กำลังมา","url":"./?view=trending","icons":[{"src":"assets/icon-192.png","sizes":"192x192"}]},{"name":"ข่าวล่าสุด","url":"./?view=latest","icons":[{"src":"assets/icon-192.png","sizes":"192x192"}]},{"name":"ข่าวที่บันทึกไว้","url":"./?view=saved","icons":[{"src":"assets/icon-192.png","sizes":"192x192"}]}]
 }
