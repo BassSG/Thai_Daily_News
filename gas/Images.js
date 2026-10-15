@@ -32,11 +32,11 @@ var TDImages=(function(){
 
 function tdEnrichImages_(items,now){
   // Bound extra metadata requests. Previously checked stories retry after six hours, not every read.
-  var allowed=['infoquest.co.th','aljazeera.com','bangkokpost.com'];
-  var candidates=items.filter(function(it){return !it.image_url&&allowed.indexOf(TDCore.host(it.url))>=0&&(!it.image_checked_at||now-Date.parse(it.image_checked_at)>6*3600000);});
+  var allowed=['infoquest.co.th','aljazeera.com','bangkokpost.com','matichon.co.th','khaosod.co.th','thestandard.co','bbc.com','bbc.co.uk'];
+  var candidates=items.filter(function(it){return (!it.image_url||(it.reading_text||it.excerpt||'').length<180)&&allowed.indexOf(TDCore.host(it.url))>=0&&(!it.metadata_checked_at||now-Date.parse(it.metadata_checked_at)>6*3600000);});
   candidates.sort(function(a,b){return b.score-a.score;});candidates=candidates.slice(0,8);if(!candidates.length)return;
   try{
     var responses=UrlFetchApp.fetchAll(candidates.map(function(it){return {url:it.url,method:'get',headers:{Accept:'text/html'},muteHttpExceptions:true,followRedirects:true,validateHttpsCertificates:true};}));
-    candidates.forEach(function(it,i){it.image_checked_at=new Date(now).toISOString();try{var response=responses[i];if(response.getResponseCode()!==200)return;var html=response.getContentText('UTF-8');if(html.length>2000000)return;var image=TDImages.meta(html,it.url);if(image){it.image_url=image;it.image_origin='publisher';}}catch(ignored){}});
-  }catch(ignored){candidates.forEach(function(it){it.image_checked_at=new Date(now).toISOString();});}
+    candidates.forEach(function(it,i){it.metadata_checked_at=it.image_checked_at=new Date(now).toISOString();try{var response=responses[i];if(response.getResponseCode()!==200)return;var html=response.getContentText('UTF-8');if(html.length>2000000)return;var image=TDImages.meta(html,it.url);if(image){it.image_url=image;it.image_origin='publisher';}var lead=TDReader.meta(html,it.url,it.title);if(lead.length>(it.reading_text||it.excerpt||'').length){it.reading_text=lead;it.reading_origin='publisher';it.excerpt=TDCore.clean(lead).slice(0,320);it.snippet=it.excerpt;it.content_hash=TDCore.hash(it.title+'|'+lead);}}catch(ignored){}});
+  }catch(ignored){candidates.forEach(function(it){it.metadata_checked_at=it.image_checked_at=new Date(now).toISOString();});}
 }

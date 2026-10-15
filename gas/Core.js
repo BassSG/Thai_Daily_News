@@ -85,7 +85,7 @@ var TDCore = (function () {
     if(name&&title.endsWith(' - '+name))title=title.slice(0,-name.length-3).trim();
     var h=host(sourceUrl)||host(url);
     if(/(?:^|\.)(?:facebook\.com|fb\.com|youtube\.com|tiktok\.com|vietnam\.vn|pinterest\.com)$/.test(h))return null;
-    var excerpt=source.query||source.id==='google-th'?'':clean(raw.excerpt).replace(/The post[\s\S]*$/i,'').replace(title,'').trim().slice(0,200);
+    var excerpt=source.query||source.id==='google-th'?'':clean(raw.excerpt).replace(/The post[\s\S]*$/i,'').replace(title,'').trim().slice(0,320);
     if(excerpt.length<12)excerpt='';
     var category=classify(title,excerpt,source.category);
     var label=(categories.filter(function(c){return c.id===category;})[0]||categories[1]).label;
@@ -104,11 +104,14 @@ var TDCore = (function () {
       if(old[it.id])it=Object.assign({},it,{first_seen_at:old[it.id].first_seen_at||it.first_seen_at});
       if(map[it.id]&&map[it.id].excerpt&&!it.excerpt)it=Object.assign({},it,{excerpt:map[it.id].excerpt,snippet:map[it.id].excerpt});
       it=Object.assign({},it);
+        if(map[it.id]&&map[it.id].metadata_checked_at&&!it.metadata_checked_at)it.metadata_checked_at=map[it.id].metadata_checked_at;
+        if(map[it.id]&&(map[it.id].reading_text||'').length>(it.reading_text||'').length){it.reading_text=map[it.id].reading_text;it.reading_origin=map[it.id].reading_origin;}
       if(map[it.id]&&map[it.id].image_url&&!it.image_url){it.image_url=map[it.id].image_url;it.image_origin=map[it.id].image_origin;}
       if(map[it.id]&&map[it.id].image_checked_at&&!it.image_checked_at)it.image_checked_at=map[it.id].image_checked_at;
-      if(/^google-/.test(it.adapter||'')||host(it.url)==='news.google.com'){it.excerpt='';it.snippet='';}
+      if(/^google-/.test(it.adapter||'')||host(it.url)==='news.google.com'){it.excerpt='';it.snippet='';it.reading_text='';}
       else {it.excerpt=clean(it.excerpt).replace(/\s*The (?:post|po)[\s\S]*$/i,'').trim();it.snippet=it.excerpt;}
       it.category_id=classify(it.title,it.excerpt,it.category_id);
+        it.content_hash=hash(it.title+'|'+(it.reading_text||it.excerpt||''));
       var cat=categories.filter(function(c){return c.id===it.category_id;})[0]||categories[1];
       it.category=cat.label;it.module=cat.id;
       map[it.id]=it;
