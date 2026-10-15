@@ -1,4 +1,19 @@
-# Verification · 2026-10-14
+# Verification · 2026-10-15
+
+## 2.5 · Your Daily Perspective
+
+Release source: `4ad5cb60d16d850b97703dd0c878f31415d0e9f1`. [Successful build, signing, release lint and Android 11/15 device checks](https://github.com/BassSG/Thai_Daily_News/actions/runs/38751628467).
+
+- Replaced the large dashboard with an image-led reading layout, compact live signal strip, direct category filters and desktop feature stories. Secondary feature stories remain in the phone feed and are not repeated in the desktop list.
+- Verified layouts at 360, 390, 768 and 1440 CSS pixels without horizontal overflow. Checked Daylight/Midnight, search with no results, clearing filters, saving/removing stories, list/card switching and large reader text through the browser UI.
+- Android 11/API 30 and Android 15/API 35 passed against live GAS. Checks include news photos, viewport-attached bottom navigation, full-card hero-image bounds, list/card mode, reader text enlargement, settings panels, bookmarks, all three widgets, widget paging/wrapping, collection scrolling, correct article opening, notifications and URL validation.
+- Inspected native Android home and settings screenshots. Added physical position and viewport-height fallbacks plus flex-gap detection for older System WebViews after visual QA exposed a misplaced photograph and bottom navigation.
+- Widget photograph downloads now use a separate single-thread executor and an image-only JobScheduler job. Pending refresh jobs are coalesced, so image downloads do not occupy the news-request queue. The scrolling test waits for the image queue before injecting gestures.
+- Background web refresh stages new snapshots while the user is reading down the page or has the reader/settings open. A visible update button applies the prepared snapshot. Reader focus returns to the originating story when closed.
+- 22 Node tests passed. Added regressions for commentary mentioning a coup and Thai-language foreign reporting retaining a legacy domestic scope. Live GAS verified both corrections and all 15 feeds responding.
+- Browser CSS/JS/config URLs and offline precache entries carry the release version to avoid mixing a new page with old cached application files. The GAS build embeds script text through replacement callbacks, preserving dollar signs, and compiles every generated inline script to catch packaging syntax errors.
+- GAS deployment 69 serves version 2.5.0 at the existing endpoint. No new paid API or credentials were introduced.
+- APK versionCode 20500/versionName 2.5.0 uses the existing signing identity. Downloaded the public stable APK and verified SHA-256 `81ffd2bcff4c1c2ec33ed3c01b9ed6df567e828cae0de8f77cfff7c77a107da4` against the tested release artifact.
 
 ## 2.4 · Intelligent alerts and Live News Pulse
 

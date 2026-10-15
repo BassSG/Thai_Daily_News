@@ -1,7 +1,7 @@
 'use strict';
 importScripts('./config.js');
 const SHELL='tdn-shell-2.5.0',DATA='tdn-data-2';
-const FILES=['./','./index.html','./app.css','./app.js','./config.js','./manifest.webmanifest','./assets/brand-mark.png','./assets/icon-192.png','./assets/icon-512.png','./assets/icon-maskable-512.png','./assets/badge-96.png'];
+const FILES=['./','./index.html','./app.css?v=2.5.0','./app.js?v=2.5.0','./config.js?v=2.5.0','./manifest.webmanifest','./assets/brand-mark.png','./assets/icon-192.png','./assets/icon-512.png','./assets/icon-maskable-512.png','./assets/badge-96.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(SHELL).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('tdn-shell-')&&k!==SHELL).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
