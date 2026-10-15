@@ -15,7 +15,7 @@ import java.security.MessageDigest;
 import java.util.*;
 import javax.net.ssl.HttpsURLConnection;
 
-/** Bounded publisher thumbnails. Rendering only reads disk; downloads run on NewsRepository.IO. */
+/** Bounded publisher thumbnails. Rendering only reads disk; downloads use the image executor. */
 final class WidgetImageCache {
     private static final int MAX_DOWNLOAD=4_000_000, WIDTH=320, HEIGHT=200;
     private static final long MAX_DISK=10_000_000L, RETRY_MS=30*60_000L;

@@ -21,6 +21,7 @@
   const signals={breaking:{label:'ข่าวด่วน',className:'breaking'},major:{label:'ข่าวใหญ่',className:'major'},trending:{label:'กำลังเป็นกระแส',className:'trending'},rising:{label:'เริ่มเป็นกระแส',className:'rising'}};
   function toast(message){clearTimeout(toastTimer);$('#toast').textContent=message;$('#toast').hidden=false;toastTimer=setTimeout(()=>$('#toast').hidden=true,4200);}
   function paintIcons(root=document){root.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=icon(el.dataset.icon));}
+  function detectFlexGap(){const probe=document.createElement('div');probe.style.cssText='position:absolute;visibility:hidden;display:flex;flex-direction:column;row-gap:1px';probe.append(document.createElement('div'),document.createElement('div'));[...probe.children].forEach(el=>el.style.height='1px');document.body.appendChild(probe);document.documentElement.classList.toggle('no-flex-gap',probe.scrollHeight<3);probe.remove();}
   function shortTime(date){const ms=Date.now()-Date.parse(date);if(!Number.isFinite(ms))return 'ไม่ทราบเวลา';if(ms<60000)return 'เมื่อสักครู่';if(ms<3600000)return `${Math.floor(ms/60000)} นาทีที่แล้ว`;if(ms<86400000)return `${Math.floor(ms/3600000)} ชม. ที่แล้ว`;return new Date(date).toLocaleDateString('th-TH',{day:'numeric',month:'short'});}
   function fullTime(date){return date?new Date(date).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'ยังไม่มีเวลาอัปเดต';}
   function categoryOf(item){return categories.find(c=>c.id===item.category_id)||categories[1];}
@@ -228,7 +229,7 @@
   window.TDN_BACK=()=>{const dialog=$$('dialog').find(d=>d.open);if(dialog){dialog.close();return true;}if(state.selected){closeArticle();return true;}if(document.body.classList.contains('search-open')){document.body.classList.remove('search-open');$('#searchToggle').setAttribute('aria-expanded','false');state.query='';$('#searchInput').value='';render();return true;}if(state.view!=='today'||state.category!=='all'||state.query){state.category='all';state.query='';$('#searchInput').value='';setView('today');return true;}return false;};
   $('#editionDate').textContent=new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   $('#editionNumber').textContent=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'}).toUpperCase()+' / DAILY';
-  paintIcons();setTheme(load('tdn.theme','light'));setReaderSize(state.readerSize);setSettingsTab('alerts');renderNavigation();updateSettings();
+  detectFlexGap();paintIcons();setTheme(load('tdn.theme','light'));setReaderSize(state.readerSize);setSettingsTab('alerts');renderNavigation();updateSettings();
   try{state.snapshot=native?JSON.parse(NativeNews.getCachedSnapshot()):load('tdn.snapshot',null);if(state.snapshot?.items)render();else state.snapshot=null;}catch{state.snapshot=null;}
   const initialParams=new URLSearchParams(location.search),initialId=initialParams.get('article');if(initialId)state.pending=initialId;if(views.some(v=>v.id===initialParams.get('view')))state.view=initialParams.get('view');
   if(native){try{const id=NativeNews.getInitialArticle();if(id)state.pending=id;}catch{}}

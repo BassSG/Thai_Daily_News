@@ -99,6 +99,6 @@ public class NewsWidgetProvider extends AppWidgetProvider {
     private static String relative(String date){long ms=Math.max(0,System.currentTimeMillis()-NewsRepository.timestamp(date));return ms<60_000?"เมื่อสักครู่":ms<3600_000?ms/60_000+" นาที":ms<86400_000?ms/3600_000+" ชม.":ms/86400_000+" วัน";}
     private static PendingIntent open(Context c,int request,String id){Intent intent=new Intent(c,MainActivity.class).setData(Uri.parse("thaidaily://widget/"+request+"/"+Uri.encode(id))).putExtra("article",id).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_NEW_TASK);return PendingIntent.getActivity(c,1000+request,intent,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);}
     @Override public void onUpdate(Context c,AppWidgetManager manager,int[] ids){for(int id:ids)update(c,manager,id);NewsJobService.schedule(c);NewsJobService.refreshSoon(c);}
-    @Override public void onAppWidgetOptionsChanged(Context c,AppWidgetManager manager,int id,Bundle options){update(c,manager,id);NewsRepository.IO.execute(()->refreshPhotos(c.getApplicationContext()));}
+    @Override public void onAppWidgetOptionsChanged(Context c,AppWidgetManager manager,int id,Bundle options){update(c,manager,id);NewsJobService.refreshWidgetPhotos(c.getApplicationContext());}
     @Override public void onDeleted(Context c,int[] ids){android.content.SharedPreferences.Editor edit=NewsRepository.prefs(c).edit();for(int id:ids){edit.remove("widget_"+id);edit.remove("widget_cursor_"+id);}edit.apply();}
 }

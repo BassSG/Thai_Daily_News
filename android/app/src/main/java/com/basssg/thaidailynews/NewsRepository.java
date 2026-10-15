@@ -19,6 +19,7 @@ public final class NewsRepository {
     public static final String CHANNEL="thai_daily_news";
     public static final String BREAKING_CHANNEL="thai_daily_breaking_v2";
     public static final ExecutorService IO=Executors.newSingleThreadExecutor();
+    public static final ExecutorService IMAGE_IO=Executors.newSingleThreadExecutor();
     private NewsRepository(){}
     public static android.content.SharedPreferences prefs(Context c){return c.getSharedPreferences("thai_daily",Context.MODE_PRIVATE);}
     public static JSONObject settings(Context c){try{return new JSONObject(prefs(c).getString("settings","{}"));}catch(Exception e){return new JSONObject();}}
@@ -55,7 +56,7 @@ public final class NewsRepository {
         java.nio.file.Files.move(temp.toPath(),dest.toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING,java.nio.file.StandardCopyOption.ATOMIC_MOVE);
         prefs(c).edit().putLong("last_success",System.currentTimeMillis()).apply();
         if(notify)notifyNew(c,old,snapshot);
-        NewsWidgetProvider.updateAll(c);if(widgetPhotos)NewsWidgetProvider.refreshPhotos(c);return response;
+        NewsWidgetProvider.updateAll(c);if(widgetPhotos)NewsJobService.refreshWidgetPhotos(c);return response;
     }
     static long timestamp(String s){try{return Instant.parse(s).toEpochMilli();}catch(Exception e){return 0;}}
     public static boolean matches(JSONObject article,JSONObject setting){
