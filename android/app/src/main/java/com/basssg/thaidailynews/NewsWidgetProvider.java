@@ -19,7 +19,7 @@ public class NewsWidgetProvider extends AppWidgetProvider {
     static final int MAX_STORIES=20;
     public static final String[] CATEGORY_IDS={"all","politics","society","crime","economy","world","tech"};
     public static final String[] CATEGORY_LABELS={"ทุกหมวด","การเมือง","สังคม","อาชญากรรม","เศรษฐกิจ","ต่างประเทศ","เทคโนโลยี"};
-    public static final String[] MODE_LABELS={"ข่าวล่าสุด","ข่าวสำคัญ","ข่าวที่บันทึกไว้"};
+    public static final String[] MODE_LABELS={"ข่าวล่าสุด","ข่าวที่ต้องรู้","ข่าวที่บันทึกไว้"};
     static JSONObject config(Context c,int id){try{return new JSONObject(NewsRepository.prefs(c).getString("widget_"+id,"{}"));}catch(Exception e){return new JSONObject();}}
     static String kind(AppWidgetProviderInfo info){return info.provider.getClassName().endsWith("SmallWidget")?"small":info.provider.getClassName().endsWith("LargeWidget")?"large":"medium";}
     static boolean owned(Context c,AppWidgetProviderInfo info){return info!=null&&info.provider.getPackageName().equals(c.getPackageName())&&(info.provider.getClassName().equals(SmallWidget.class.getName())||info.provider.getClassName().equals(MediumWidget.class.getName())||info.provider.getClassName().equals(LargeWidget.class.getName()));}
@@ -30,7 +30,7 @@ public class NewsWidgetProvider extends AppWidgetProvider {
     static List<JSONObject> selected(Context c,int id){
         JSONObject cfg=config(c,id);String mode=cfg.optString("mode","latest"),category=cfg.optString("category","all");
         JSONArray source=mode.equals("saved")?NewsRepository.bookmarks(c):NewsRepository.cached(c).optJSONArray("items");
-        ArrayList<JSONObject> items=new ArrayList<>();if(source!=null)for(int i=0;i<source.length();i++){JSONObject it=source.optJSONObject(i);if(it!=null&&(category.equals("all")||category.equals(it.optString("category_id"))))items.add(it);}
+        ArrayList<JSONObject> items=new ArrayList<>();if(source!=null)for(int i=0;i<source.length();i++){JSONObject it=source.optJSONObject(i);if(it!=null&&(category.equals("all")||category.equals(it.optString("category_id")))&&(!mode.equals("important")||it.optBoolean("alert_eligible")))items.add(it);}
         if(mode.equals("important"))items.sort((a,b)->Double.compare(b.optDouble("score"),a.optDouble("score")));
         else items.sort((a,b)->Long.compare(NewsRepository.timestamp(b.optString("published_at")),NewsRepository.timestamp(a.optString("published_at"))));
         return new ArrayList<>(items.subList(0,Math.min(items.size(),MAX_STORIES)));

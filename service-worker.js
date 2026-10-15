@@ -1,6 +1,6 @@
 'use strict';
 importScripts('./config.js');
-const SHELL='tdn-shell-2.3.0',DATA='tdn-data-2';
+const SHELL='tdn-shell-2.4.0',DATA='tdn-data-2';
 const FILES=['./','./index.html','./app.css','./app.js','./config.js','./manifest.webmanifest','./assets/brand-mark.png','./assets/icon-192.png','./assets/icon-512.png','./assets/icon-maskable-512.png','./assets/badge-96.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(SHELL).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('tdn-shell-')&&k!==SHELL).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
@@ -13,9 +13,12 @@ self.addEventListener('message',event=>{if(event.data?.type==='preferences')even
 self.addEventListener('push',event=>event.waitUntil((async()=>{
   let preferences={};const response=await caches.match(new URL('./notification-preferences.json',self.location));if(response)preferences=await response.json();
   if(preferences.enabled===false)return;
-  const hour=new Date().getHours();if(preferences.quietHours&& (hour>=22||hour<7))return;
+  const hour=new Date().getHours(),quiet=preferences.quietHours&&(hour>=22||hour<7),mode=preferences.alertMode||'major';
+  let seen=[];const historyResponse=await caches.match(new URL('./notification-history.json',self.location));if(historyResponse)seen=await historyResponse.json();
   let body='มีข่าวใหม่ในหมวดที่คุณติดตาม เปิดอ่านเรื่องสำคัญรอบวันได้เลย',article=null;
-  try{const result=await fetch(self.TDN_CONFIG.api+'?action=snapshot',{cache:'no-store'}).then(r=>r.json());const items=(result.snapshot?.items||[]).filter(it=>(!preferences.categories?.length||preferences.categories.includes(it.category_id))&&(!preferences.importantOnly||it.score>=13));if(items.length){article=items[0];body=article.title_th||article.title;}}catch{/* Empty payload push still gives a useful, honest notification. */}
-  await self.registration.showNotification('Thai Daily News',{body,icon:'assets/icon-192.png',badge:'assets/badge-96.png',tag:'tdn-news',renotify:false,data:{url:self.TDN_CONFIG.web+(article?'?article='+article.id:'')},actions:[{action:'read',title:'เปิดอ่านข่าว'}]});
+  try{const result=await fetch(self.TDN_CONFIG.api+'?action=snapshot',{cache:'no-store'}).then(r=>r.json());const items=(result.snapshot?.items||[]).filter(it=>it.alert_eligible&&!seen.includes(it.topic_id||it.id)&&(!preferences.categories?.length||preferences.categories.includes(it.category_id))&&(mode==='signals'||mode==='major'&&['breaking','major'].includes(it.signal)||mode==='breaking'&&it.signal==='breaking')&&(!quiet||it.signal==='breaking')).sort((a,b)=>b.score-a.score);if(items.length){article=items[0];body=article.title_th||article.title;}}catch{}
+  if(!article)return;
+  await self.registration.showNotification(article.signal==='breaking'?'ข่าวด่วน · Thai Daily':'ข่าวใหญ่ · Thai Daily',{body,icon:'assets/icon-192.png',badge:'assets/badge-96.png',tag:'tdn-'+(article.topic_id||article.id),renotify:false,data:{url:self.TDN_CONFIG.web+'?article='+article.id},actions:[{action:'read',title:'เปิดอ่านข่าว'}]});
+  seen=[...seen,article.topic_id||article.id].slice(-20);await caches.open(DATA).then(cache=>cache.put(new Request(new URL('./notification-history.json',self.location)),new Response(JSON.stringify(seen),{headers:{'Content-Type':'application/json'}})));
 })()));
 self.addEventListener('notificationclick',event=>{event.notification.close();event.waitUntil((async()=>{const url=event.notification.data?.url||self.TDN_CONFIG.web;const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});for(const client of windows){if(client.url.startsWith(self.TDN_CONFIG.web)){await client.navigate(url);return client.focus();}}return self.clients.openWindow(url);})());});

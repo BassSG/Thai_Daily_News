@@ -39,6 +39,7 @@ public class MainActivity extends Activity {
         if(Build.VERSION.SDK_INT>=33)getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,this::handleBack);
     }
     @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);initialArticle=intent.getStringExtra("article");if(initialArticle!=null&&!initialArticle.isEmpty()){try{emit("tdn-open-article",new JSONObject().put("id",initialArticle));}catch(JSONException ignored){}}}
+    @Override protected void onResume(){super.onResume();if(System.currentTimeMillis()-NewsRepository.prefs(this).getLong("last_success",0)>5*60_000L)NewsJobService.refreshSoon(this);}
     void emit(String event,JSONObject detail){main.post(()->{if(web!=null)web.evaluateJavascript("window.dispatchEvent(new CustomEvent("+JSONObject.quote(event)+",{detail:"+detail+"}));",null);});}
     void tell(String text){try{emit("tdn-toast",new JSONObject().put("message",text));}catch(JSONException ignored){}}
     private void handleBack(){web.evaluateJavascript("window.TDN_BACK ? window.TDN_BACK() : false",result->{if(!"true".equals(result))finish();});}

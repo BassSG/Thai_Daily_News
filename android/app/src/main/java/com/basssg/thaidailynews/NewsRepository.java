@@ -17,6 +17,7 @@ import javax.net.ssl.HttpsURLConnection;
 public final class NewsRepository {
     public static final String API="https://script.google.com/macros/s/AKfycbwatsqO1HW7xmIbfJgm6P-4otzfNbvGeVdcVjflwHZxzbDM34o4ul_Fe3Wfy-NuKVlaoQ/exec";
     public static final String CHANNEL="thai_daily_news";
+    public static final String BREAKING_CHANNEL="thai_daily_breaking_v2";
     public static final ExecutorService IO=Executors.newSingleThreadExecutor();
     private NewsRepository(){}
     public static android.content.SharedPreferences prefs(Context c){return c.getSharedPreferences("thai_daily",Context.MODE_PRIVATE);}
@@ -60,23 +61,30 @@ public final class NewsRepository {
     public static boolean matches(JSONObject article,JSONObject setting){
         JSONArray cats=setting.optJSONArray("categories");boolean accepted=cats==null||cats.length()==0;
         if(cats!=null)for(int i=0;i<cats.length();i++)if(cats.optString(i).equals(article.optString("category_id")))accepted=true;
-        return accepted&&(!setting.optBoolean("importantOnly")||article.optDouble("score")>=13);
+        String mode=setting.optString("alertMode","major"),signal=article.optString("signal","latest");
+        boolean level=mode.equals("signals")||mode.equals("major")&&(signal.equals("breaking")||signal.equals("major"))||mode.equals("breaking")&&signal.equals("breaking");
+        return accepted&&article.optBoolean("alert_eligible")&&level;
     }
-    public static void createChannel(Context c){NotificationManager nm=c.getSystemService(NotificationManager.class);NotificationChannel channel=new NotificationChannel(CHANNEL,"ข่าวใหม่จาก Thai Daily",NotificationManager.IMPORTANCE_DEFAULT);channel.setDescription("ข่าวใหม่ในหมวดที่คุณเลือก ปรับเสียงและการแสดงผลได้ที่นี่");nm.createNotificationChannel(channel);}
+    public static void createChannel(Context c){NotificationManager nm=c.getSystemService(NotificationManager.class);NotificationChannel breaking=new NotificationChannel(BREAKING_CHANNEL,"ข่าวด่วน",NotificationManager.IMPORTANCE_HIGH);breaking.setDescription("เหตุเร่งด่วนที่กระทบประเทศไทย หรือเหตุใหญ่ระดับโลก");NotificationChannel major=new NotificationChannel(CHANNEL,"ข่าวใหญ่และประเด็นสำคัญ",NotificationManager.IMPORTANCE_DEFAULT);major.setDescription("ข่าวใหญ่ที่ระบบคัดจากผลกระทบ ความใหม่ และการยืนยันจากหลายสำนัก");nm.createNotificationChannels(Arrays.asList(breaking,major));}
     public static boolean permission(Context c){return Build.VERSION.SDK_INT<33||c.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED;}
     public static void notifyNew(Context c,JSONObject old,JSONObject snapshot){
         JSONObject setting=settings(c);if(!setting.optBoolean("enabled")||!permission(c))return;
-        int hour=LocalTime.now().getHour();if(setting.optBoolean("quietHours",true)&&(hour>=22||hour<7))return;
-        long now=System.currentTimeMillis();if(now-prefs(c).getLong("last_notification",0)<30*60_000L)return;
+        int hour=LocalTime.now().getHour();boolean quiet=setting.optBoolean("quietHours",true)&&(hour>=22||hour<7);
+        long now=System.currentTimeMillis();
         JSONArray previous=old.optJSONArray("items"),items=snapshot.optJSONArray("items");if(previous==null||previous.length()==0||items==null)return;
         Set<String> ids=new HashSet<>();for(int i=0;i<previous.length();i++)ids.add(previous.optJSONObject(i).optString("id"));
-        ArrayList<JSONObject> news=new ArrayList<>();for(int i=0;i<items.length();i++){JSONObject item=items.optJSONObject(i);if(item!=null&&!ids.contains(item.optString("id"))&&now-timestamp(item.optString("published_at"))<2*3600_000L&&matches(item,setting))news.add(item);}
+        Set<String> sent=new HashSet<>();try{JSONArray remembered=new JSONArray(prefs(c).getString("notified_topics","[]"));for(int i=0;i<remembered.length();i++)sent.add(remembered.optString(i));}catch(Exception ignored){}
+        ArrayList<JSONObject> news=new ArrayList<>();for(int i=0;i<items.length();i++){JSONObject item=items.optJSONObject(i);if(item==null)continue;String topic=item.optString("topic_id",item.optString("id"));if(!ids.contains(item.optString("id"))&&!sent.contains(topic)&&now-timestamp(item.optString("published_at"))<3*3600_000L&&matches(item,setting)&&(!quiet||item.optString("signal").equals("breaking")))news.add(item);}
         if(news.isEmpty())return;createChannel(c);
+        news.sort((a,b)->Double.compare(b.optDouble("score"),a.optDouble("score")));boolean breaking=news.get(0).optString("signal").equals("breaking");
+        if(!breaking&&now-prefs(c).getLong("last_notification",0)<30*60_000L)return;
         JSONObject first=news.get(0);Intent intent=new Intent(c,MainActivity.class).putExtra("article",first.optString("id")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent open=PendingIntent.getActivity(c,101,intent,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         Notification.InboxStyle style=new Notification.InboxStyle();for(int i=0;i<Math.min(3,news.size());i++)style.addLine(news.get(i).optString("title"));
-        Notification notification=new Notification.Builder(c,CHANNEL).setSmallIcon(R.drawable.ic_notification).setColor(Color.rgb(214,183,117)).setContentTitle("ข่าวใหม่ "+news.size()+" เรื่อง · Thai Daily").setContentText(first.optString("title")).setStyle(style).setContentIntent(open).setAutoCancel(true).setCategory(Notification.CATEGORY_RECOMMENDATION).setVisibility(Notification.VISIBILITY_PUBLIC).setOnlyAlertOnce(true).build();
-        c.getSystemService(NotificationManager.class).notify(200,notification);prefs(c).edit().putLong("last_notification",now).apply();
+        String title=breaking?"ข่าวด่วน · Thai Daily":"ข่าวใหญ่ · Thai Daily";int sources=first.optInt("source_count",1);String context=sources>1?"ติดตามจาก "+sources+" แหล่งข่าว":"คัดจากผลกระทบและความใหม่";
+        Notification notification=new Notification.Builder(c,breaking?BREAKING_CHANNEL:CHANNEL).setSmallIcon(R.drawable.ic_notification).setColor(Color.rgb(194,77,65)).setContentTitle(title).setContentText(first.optString("title")).setSubText(context).setStyle(style).setContentIntent(open).setAutoCancel(true).setCategory(Notification.CATEGORY_RECOMMENDATION).setVisibility(Notification.VISIBILITY_PUBLIC).setOnlyAlertOnce(true).build();
+        JSONArray remembered=new JSONArray();for(String topic:sent)if(remembered.length()<30)remembered.put(topic);for(int i=0;i<Math.min(3,news.size());i++)remembered.put(news.get(i).optString("topic_id",news.get(i).optString("id")));while(remembered.length()>30)remembered.remove(0);
+        c.getSystemService(NotificationManager.class).notify(breaking?202:200,notification);prefs(c).edit().putLong("last_notification",now).putString("notified_topics",remembered.toString()).apply();
     }
     public static void testNotification(Context c){if(!permission(c))return;createChannel(c);PendingIntent open=PendingIntent.getActivity(c,102,new Intent(c,MainActivity.class),PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);Notification n=new Notification.Builder(c,CHANNEL).setSmallIcon(R.drawable.ic_notification).setColor(Color.rgb(214,183,117)).setContentTitle("Thai Daily News").setContentText("พร้อมแล้ว ข่าวสำคัญจะมาหาคุณในจังหวะที่เหมาะสม").setStyle(new Notification.BigTextStyle().bigText("พร้อมแล้ว ข่าวสำคัญจะมาหาคุณในจังหวะที่เหมาะสม")).setContentIntent(open).setAutoCancel(true).build();c.getSystemService(NotificationManager.class).notify(201,n);}
 }

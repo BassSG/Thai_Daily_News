@@ -1,7 +1,7 @@
 name: Android application
 on:
   push:
-    branches: [main, codex/news-application, codex/news-images, codex/widget-photos, codex/widget-navigation]
+    branches: [main, codex/news-application, codex/news-images, codex/widget-photos, codex/widget-navigation, codex/intelligent-alerts-ui]
   workflow_dispatch:
 permissions:
   contents: read
@@ -51,10 +51,10 @@ jobs:
           sdkmanager 'platforms;android-36' 'build-tools;35.0.0' >/dev/null
           gradle --no-daemon :app:assembleRelease :app:assembleDebug :app:assembleDebugAndroidTest :app:lintRelease
           mkdir -p ../artifacts
-          cp app/build/outputs/apk/release/app-release.apk ../artifacts/Thai-Daily-News-2.3.0.apk
+          cp app/build/outputs/apk/release/app-release.apk ../artifacts/Thai-Daily-News-2.4.0.apk
           cp app/build/outputs/apk/debug/app-debug.apk ../artifacts/app-debug.apk
           cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk ../artifacts/app-debug-androidTest.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs ../artifacts/Thai-Daily-News-2.3.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs ../artifacts/Thai-Daily-News-2.4.0.apk
       - uses: actions/upload-artifact@v4
         with:
           name: android-application

@@ -1,5 +1,5 @@
 /* Thai Daily News 2 — uses the existing GAS project and existing OpenRouter secret. */
-var TD_VERSION='2.3.0';
+var TD_VERSION='2.4.0';
 var TD_WEB='https://basssg.github.io/Thai_Daily_News/';
 var TD_GAS='https://script.google.com/macros/s/AKfycbwatsqO1HW7xmIbfJgm6P-4otzfNbvGeVdcVjflwHZxzbDM34o4ul_Fe3Wfy-NuKVlaoQ/exec';
 var TD_SOURCE_DEFS=[
@@ -9,6 +9,8 @@ var TD_SOURCE_DEFS=[
   {id:'google-crime',name:'Google News · อาชญากรรม',home:'https://news.google.com',query:'ข่าวอาชญากรรม ตำรวจ when:1d',category:'crime',minutes:10},
   {id:'google-economy',name:'Google News · เศรษฐกิจ',home:'https://news.google.com',query:'ข่าวเศรษฐกิจ ประเทศไทย when:1d',category:'economy',minutes:10},
   {id:'google-tech',name:'Google News · เทคโนโลยี',home:'https://news.google.com',query:'เทคโนโลยี AI when:1d',category:'tech',minutes:15},
+  {id:'tmd-warning',name:'กรมอุตุนิยมวิทยา · เตือนภัย',home:'https://www.tmd.go.th',url:'https://www.tmd.go.th/api/xml/warning-news',category:'society',minutes:5},
+  {id:'tmd-earthquake',name:'กรมอุตุนิยมวิทยา · แผ่นดินไหว',home:'https://www.tmd.go.th',url:'https://www.tmd.go.th/api/xml/earthquake-report',category:'society',minutes:5},
   {id:'infoquest',name:'InfoQuest',home:'https://www.infoquest.co.th',url:'https://www.infoquest.co.th/feed',category:'general',minutes:5},
   {id:'matichon',name:'มติชน',home:'https://www.matichon.co.th',url:'https://www.matichon.co.th/feed',category:'general',minutes:10},
   {id:'khaosod',name:'ข่าวสด',home:'https://www.khaosod.co.th',url:'https://www.khaosod.co.th/feed',category:'general',minutes:10},
@@ -74,6 +76,8 @@ function tdSaveSnapshot_(snap){
   snap.stats.items_total=snap.items.length;
   var retained={};snap.items.forEach(function(it){retained[it.id]=true;});
   snap.topIds=(snap.topIds||[]).filter(function(id){return retained[id];});
+  snap.alertIds=(snap.alertIds||[]).filter(function(id){return retained[id];});
+  snap.trendIds=(snap.trendIds||[]).filter(function(id){return retained[id];});
   snap.brief.daily_bullets=(snap.brief.daily_bullets||[]).filter(function(it){return retained[it.id];});
   snap.brief.top_stories=(snap.brief.top_stories||[]).filter(function(it){return retained[it.id];});
   packed=tdPack_(snap);
@@ -154,8 +158,12 @@ function tdRefresh_(force){
     var items=TDCore.merge(previous.items,incoming,now),oldIds={};(previous.items||[]).forEach(function(it){oldIds[it.id]=true;});
     tdEnrichImages_(items,now);
     var fresh=items.filter(function(it){return !oldIds[it.id]&&now-Date.parse(it.published_at)<2*3600000;});
-    var top=TDCore.top(items.filter(function(it){return now-Date.parse(it.published_at)<24*3600000;}),8);
-    var snap={version:TD_VERSION,updatedAt:successes?new Date(now).toISOString():previous.updatedAt||null,updated_at:successes?Utilities.formatDate(new Date(now),'Asia/Bangkok','yyyy-MM-dd HH:mm'):previous.updated_at||null,lastCheckedAt:new Date(now).toISOString(),categories:TDCore.categories,items:items,topIds:top.map(function(it){return it.id;}),health:TD_SOURCE_DEFS.map(function(s){return health[s.id]||{id:s.id,name:s.name,status:'pending'};}),stats:{items_total:items.length,new_items:fresh.length,sources_ok:Object.keys(health).filter(function(k){return health[k].status==='ok';}).length,sources_total:TD_SOURCE_DEFS.length},brief:{daily_bullets:top.map(function(it){return {id:it.id,text:it.title};}),top_stories:top.map(function(it){return {id:it.id,title:it.title,summary:it.excerpt,category:it.category,url:it.url};})}};
+    var dayItems=items.filter(function(it){return now-Date.parse(it.published_at)<24*3600000;}),top=TDCore.top(dayItems.filter(function(it){return it.scope==='thailand'||it.alert_eligible;}),8);
+    function uniqueTopics(list,limit){var seen={};return list.filter(function(it){var topic=it.topic_id||it.id;if(seen[topic])return false;seen[topic]=true;return true;}).slice(0,limit);}
+    var alerts=uniqueTopics(dayItems.filter(function(it){return it.alert_eligible&&(it.signal==='breaking'||it.signal==='major');}).sort(function(a,b){return b.score-a.score;}),12);
+    var trends=uniqueTopics(dayItems.filter(function(it){return it.scope!=='world'&&(it.signal==='trending'||it.signal==='rising');}).sort(function(a,b){return b.score-a.score;}),20);
+    function topicCount(list){var seen={};list.forEach(function(it){seen[it.topic_id||it.id]=true;});return Object.keys(seen).length;}
+    var snap={version:TD_VERSION,updatedAt:successes?new Date(now).toISOString():previous.updatedAt||null,updated_at:successes?Utilities.formatDate(new Date(now),'Asia/Bangkok','yyyy-MM-dd HH:mm'):previous.updated_at||null,lastCheckedAt:new Date(now).toISOString(),categories:TDCore.categories,items:items,topIds:top.map(function(it){return it.id;}),alertIds:alerts.map(function(it){return it.id;}),trendIds:trends.map(function(it){return it.id;}),health:TD_SOURCE_DEFS.map(function(s){return health[s.id]||{id:s.id,name:s.name,status:'pending'};}),stats:{items_total:items.length,new_items:fresh.length,breaking:topicCount(dayItems.filter(function(it){return it.signal==='breaking';})),major:topicCount(dayItems.filter(function(it){return it.signal==='major';})),trending:topicCount(dayItems.filter(function(it){return it.scope!=='world'&&(it.signal==='trending'||it.signal==='rising');})),sources_ok:Object.keys(health).filter(function(k){return health[k].status==='ok';}).length,sources_total:TD_SOURCE_DEFS.length},brief:{daily_bullets:top.map(function(it){return {id:it.id,text:it.title};}),top_stories:top.map(function(it){return {id:it.id,title:it.title,summary:it.excerpt,category:it.category,url:it.url,signal:it.signal};})}};
     tdSaveSnapshot_(snap);
     if(previous.items&&previous.items.length&&fresh.length)tdSendPush_(fresh,now);
     return {ok:true,items:items.length,newItems:fresh.length,sources:successes,updatedAt:snap.updatedAt};
@@ -205,7 +213,8 @@ function tdSubscribe_(payload){
     if(old&&old.proof!==TDCore.hash(proof))return {ok:false,error:'อุปกรณ์นี้ยังยืนยันไม่ได้'};
     if(!old&&Object.keys(map).length>=20)return {ok:false,error:'จำนวนอุปกรณ์แจ้งเตือนเต็มแล้ว'};
     var prefs=payload.preferences||{};
-    map[id]={endpoint:sub.endpoint,proof:TDCore.hash(proof),categories:(prefs.categories||[]).filter(function(c){return TDCore.categories.some(function(x){return x.id===c;});}).slice(0,6),importantOnly:prefs.importantOnly===true,quietHours:prefs.quietHours!==false,timezoneOffset:Math.max(-840,Math.min(840,Number(prefs.timezoneOffset)||-420)),lastSent:old&&old.lastSent||0,at:Date.now()};
+    var mode=/^(?:breaking|major|signals)$/.test(prefs.alertMode||'')?prefs.alertMode:'major';
+    map[id]={endpoint:sub.endpoint,proof:TDCore.hash(proof),categories:(prefs.categories||[]).filter(function(c){return TDCore.categories.some(function(x){return x.id===c;});}).slice(0,6),alertMode:mode,quietHours:prefs.quietHours!==false,timezoneOffset:Math.max(-840,Math.min(840,Number(prefs.timezoneOffset)||-420)),lastSent:old&&old.lastSent||0,lastTopics:old&&old.lastTopics||[],at:Date.now()};
     tdWriteMap_('TD_SUBSCRIBERS',map);return {ok:true,id:id};
   }catch(err){return {ok:false,error:'ยังบันทึกการแจ้งเตือนไม่ได้ กรุณาลองใหม่'};}finally{lock.releaseLock();}
 }
@@ -225,13 +234,16 @@ function tdSendPush_(fresh,now){
   var map=tdReadMap_('TD_SUBSCRIBERS'),changed=false,jwts={};
   Object.keys(map).forEach(function(id){
     var sub=map[id];
-    if(!tdValidPushEndpoint_(sub.endpoint)||TDCore.quiet(sub,now)||now-sub.lastSent<30*60000||!fresh.some(function(it){return TDCore.matches(it,sub);}))return;
+    var sent={};(sub.lastTopics||[]).forEach(function(topic){sent[topic]=true;});
+    var candidates=fresh.filter(function(it){return TDCore.matches(it,sub)&&!sent[it.topic_id||it.id];}).sort(function(a,b){return b.score-a.score;});
+    if(TDCore.quiet(sub,now))candidates=candidates.filter(function(it){return it.signal==='breaking';});
+    if(!tdValidPushEndpoint_(sub.endpoint)||!candidates.length||candidates[0].signal!=='breaking'&&now-sub.lastSent<30*60000)return;
     try{
       var aud=sub.endpoint.match(/^https:\/\/[^/]+/)[0];if(!jwts[aud])jwts[aud]=tdJwt_(aud,privateKey,now);
-      var response=UrlFetchApp.fetch(sub.endpoint,{method:'post',headers:{Authorization:'vapid t='+jwts[aud]+', k='+publicKey,TTL:'3600',Urgency:'normal',Topic:'thai-daily-news'},payload:'',muteHttpExceptions:true,followRedirects:false});
+      var response=UrlFetchApp.fetch(sub.endpoint,{method:'post',headers:{Authorization:'vapid t='+jwts[aud]+', k='+publicKey,TTL:'3600',Urgency:candidates[0].signal==='breaking'?'high':'normal',Topic:'thai-daily-news'},payload:'',muteHttpExceptions:true,followRedirects:false});
       var code=response.getResponseCode();
       if(code===404||code===410){delete map[id];changed=true;}
-      else if(code>=200&&code<300){sub.lastSent=now;changed=true;}
+      else if(code>=200&&code<300){sub.lastSent=now;sub.lastTopics=(sub.lastTopics||[]).concat([candidates[0].topic_id||candidates[0].id]).slice(-20);changed=true;}
     }catch(err){/* Keep a subscription for the next scheduled attempt. */}
   });
   if(changed)tdWriteMap_('TD_SUBSCRIBERS',map);

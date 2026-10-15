@@ -9,54 +9,71 @@
   const safeUrl=s=>/^https?:\/\//i.test(String(s||''))?String(s):'#';
   const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f;}catch{return f;}};
   const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{/* Reading remains available when storage is full. */}};
-  let preferences=load('tdn.preferences',{categories:[],importantOnly:false,quietHours:true,timezoneOffset:new Date().getTimezoneOffset(),enabled:false});
+  let preferences=load('tdn.preferences',{categories:[],alertMode:'major',quietHours:true,timezoneOffset:new Date().getTimezoneOffset(),enabled:false});
   if(native){try{preferences={...preferences,...JSON.parse(NativeNews.getSettings())};}catch{}}
+  if(!['breaking','major','signals'].includes(preferences.alertMode))preferences.alertMode='major';
   const state={snapshot:null,view:'today',category:'all',query:'',limit:25,saved:load('tdn.saved',{}),read:new Set(load('tdn.read',[])),failedImages:new Set(),selected:null,pending:null,refreshing:false};
   let toastTimer,refreshTimer,installPrompt,swRegistration,bridgeReady,bridgeWindow,bridgeOrigin,bridgeToken,bridgePromise;
   const requests=new Map();
-  const views=[{id:'today',label:'ภาพรวมวันนี้',short:'วันนี้',icon:'home'},{id:'latest',label:'ข่าวล่าสุด',short:'ล่าสุด',icon:'clock'},{id:'important',label:'ข่าวสำคัญ',short:'สำคัญ',icon:'trending'},{id:'saved',label:'บันทึกไว้',short:'บันทึก',icon:'bookmark'}];
+  const views=[{id:'today',label:'สรุปรอบวัน',short:'วันนี้',icon:'home'},{id:'alerts',label:'ด่วนและข่าวใหญ่',short:'ต้องรู้',icon:'bell'},{id:'trending',label:'กระแสที่กำลังมา',short:'กระแส',icon:'trending'},{id:'latest',label:'ข่าวล่าสุด',short:'ล่าสุด',icon:'clock'},{id:'saved',label:'บันทึกไว้',short:'บันทึก',icon:'bookmark'}];
+  const signals={breaking:{label:'ข่าวด่วน',className:'breaking'},major:{label:'ข่าวใหญ่',className:'major'},trending:{label:'กำลังเป็นกระแส',className:'trending'},rising:{label:'เริ่มเป็นกระแส',className:'rising'}};
   function toast(message){clearTimeout(toastTimer);$('#toast').textContent=message;$('#toast').hidden=false;toastTimer=setTimeout(()=>$('#toast').hidden=true,4200);}
   function paintIcons(root=document){root.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=icon(el.dataset.icon));}
   function shortTime(date){const ms=Date.now()-Date.parse(date);if(!Number.isFinite(ms))return 'ไม่ทราบเวลา';if(ms<60000)return 'เมื่อสักครู่';if(ms<3600000)return `${Math.floor(ms/60000)} นาทีที่แล้ว`;if(ms<86400000)return `${Math.floor(ms/3600000)} ชม. ที่แล้ว`;return new Date(date).toLocaleDateString('th-TH',{day:'numeric',month:'short'});}
   function fullTime(date){return date?new Date(date).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'ยังไม่มีเวลาอัปเดต';}
   function categoryOf(item){return categories.find(c=>c.id===item.category_id)||categories[1];}
   function titleOf(item){return item.title_th||item.title||item.title_raw||'';}
+  function signalOf(item){return signals[item.signal]||null;}
+  function signalBadge(item){const signal=signalOf(item);return signal?`<span class="signal-badge ${signal.className}">${signal.label}</span>`:'';}
   function imageOf(item){const image=item.image_url||(state.snapshot?.items||[]).find(it=>it.id===item.id)?.image_url||'';return /^https:\/\/[a-z0-9.-]+(?::443)?\//i.test(image)&&!state.failedImages.has(image)?image:'';}
   function photo(item,kind){const image=imageOf(item);return image?`<figure class="story-photo ${kind}-photo"><img class="news-image" data-news-image src="${esc(image)}" alt="${kind==='article'?esc('ภาพประกอบข่าวจาก '+item.source):''}" loading="${kind==='hero'?'eager':'lazy'}" ${kind==='hero'?'fetchpriority="high"':''} decoding="async" referrerpolicy="no-referrer">${kind==='article'?`<figcaption>ภาพจาก ${esc(item.source)} · เปิดรายละเอียดที่สำนักข่าวต้นฉบับ</figcaption>`:''}</figure>`:'';}
-  function meta(item){return `<div class="story-meta"><span class="source-name">${esc(item.source||item.host||'สำนักข่าว')}</span><i class="meta-dot"></i><time datetime="${esc(item.published_at)}">${esc(shortTime(item.published_at))}</time>${item.language==='en'?'<span class="language-tag">EN</span>':''}</div>`;}
+  function meta(item){return `<div class="story-meta"><span class="source-name">${esc(item.source||item.host||'สำนักข่าว')}</span><i class="meta-dot"></i><time datetime="${esc(item.published_at)}">${esc(shortTime(item.published_at))}</time>${item.source_count>1?`<span class="source-proof">${item.source_count} แหล่งข่าว</span>`:''}${item.language==='en'?'<span class="language-tag">EN</span>':''}</div>`;}
   function renderNavigation(){
     $('#desktopNav').innerHTML=views.map(v=>`<button class="nav-item ${state.view===v.id?'active':''}" data-view="${v.id}">${icon(v.icon)}${v.label}${v.id==='saved'?`<span class="nav-count">${Object.keys(state.saved).length}</span>`:''}</button>`).join('');
     $('#categoryNav').innerHTML=categories.map(c=>`<button class="nav-item ${state.category===c.id?'active':''}" data-category="${c.id}"><i class="category-dot" style="background:${c.color}"></i>${c.label}</button>`).join('');
-    $('#bottomNav').innerHTML=views.map(v=>`<button data-view="${v.id}" class="${state.view===v.id?'active':''}">${icon(v.icon)}<span>${v.short}</span></button>`).join('')+`<button data-action="settings">${icon('settings')}<span>ตั้งค่า</span></button>`;
+    $('#bottomNav').innerHTML=views.map(v=>`<button data-view="${v.id}" class="${state.view===v.id?'active':''}">${icon(v.icon)}<span>${v.short}</span></button>`).join('');
     $('#categoryChips').innerHTML=[{id:'all',label:'ทั้งหมด',icon:'newspaper'},...categories].map(c=>`<button class="category-chip ${state.category===c.id?'active':''}" data-category="${c.id}" aria-pressed="${state.category===c.id}">${icon(c.icon)}${c.label}</button>`).join('');
   }
   function listItems(){
     let items=state.view==='saved'?Object.values(state.saved):(state.snapshot?.items||[]).slice();
     const hours=Number($('#timeFilter').value),q=state.query.toLowerCase();
     items=items.filter(it=>(state.view==='saved'||Date.now()-Date.parse(it.published_at)<hours*3600000)&&(state.category==='all'||it.category_id===state.category)&&(!q||(titleOf(it)+' '+it.excerpt+' '+it.source+' '+it.category).toLowerCase().includes(q)));
-    return items.sort(state.view==='important'?(a,b)=>b.score-a.score:(a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));
+    if(state.view==='today')items=items.filter(it=>it.scope!=='world'||it.alert_eligible);
+    if(state.view==='alerts')items=items.filter(it=>it.alert_eligible&&(it.signal==='breaking'||it.signal==='major'));
+    if(state.view==='trending')items=items.filter(it=>it.scope!=='world'&&(it.signal==='trending'||it.signal==='rising'));
+    if(['today','alerts','trending'].includes(state.view)){const topics=new Set();items=items.filter(it=>{const topic=it.topic_id||it.id;if(topics.has(topic))return false;topics.add(topic);return true;});}
+    return items.sort(['today','alerts','trending'].includes(state.view)?(a,b)=>b.score-a.score:(a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));
+  }
+  function renderPulse(){
+    const all=(state.snapshot?.items||[]).filter(it=>Date.now()-Date.parse(it.published_at)<24*3600000),counts={breaking:0,major:0,trending:0},counted={breaking:new Set(),major:new Set(),trending:new Set()};
+    all.forEach(it=>{const topic=it.topic_id||it.id;if(it.signal==='breaking')counted.breaking.add(topic);else if(it.signal==='major')counted.major.add(topic);else if(it.scope!=='world'&&(it.signal==='trending'||it.signal==='rising'))counted.trending.add(topic);});Object.keys(counts).forEach(key=>counts[key]=counted[key].size);
+    $('#pulseStats').innerHTML=`<div class="pulse-stat breaking"><strong>${counts.breaking}</strong><span>ข่าวด่วน</span></div><div class="pulse-stat major"><strong>${counts.major}</strong><span>ข่าวใหญ่</span></div><div class="pulse-stat trending"><strong>${counts.trending}</strong><span>สัญญาณกระแส</span></div>`;
+    const ids=[...(state.snapshot?.alertIds||[]),...(state.snapshot?.trendIds||[])],used=new Set(),pulse=ids.map(id=>all.find(it=>it.id===id)).filter(it=>it&&!used.has(it.topic_id||it.id)&&used.add(it.topic_id||it.id)).slice(0,3);
+    $('#alertPulse').innerHTML=pulse.length?pulse.map(it=>`<button class="pulse-story" data-open="${it.id}">${signalBadge(it)}<h3>${esc(titleOf(it))}</h3><small>${esc(it.source)} · ${esc(shortTime(it.published_at))}</small></button>`).join(''):`<div class="pulse-empty">ขณะนี้ยังไม่มีเหตุที่ผ่านเกณฑ์ข่าวด่วนหรือข่าวใหญ่ ระบบยังติดตามทุกแหล่งให้อัตโนมัติ</div>`;
   }
   function render(){
     renderNavigation();
-    const titles={today:['วันนี้ มีอะไรสำคัญ','ข่าวไทยและรอบโลก คัดมาให้คุณติดตามในที่เดียว'],latest:['ติดตามเรื่องราวล่าสุด','เรียงตามเวลาที่สำนักข่าวเผยแพร่ ให้คุณตามเรื่องใหม่ได้ทัน'],important:['เรื่องสำคัญ ที่ควรรู้','ประเด็นที่น่าจับตา จากข่าวในไทยและต่างประเทศ'],saved:['เก็บไว้ อ่านในจังหวะของคุณ','ข่าวที่คุณสนใจ พร้อมกลับมาอ่านต่อได้ทุกเมื่อ']};
+    const titles={today:['วันนี้ เรื่องไหนต้องรู้','ข่าวไทยที่มีผลกับคุณ และเฉพาะเหตุใหญ่จริงจากต่างประเทศ'],alerts:['ด่วนและข่าวใหญ่','รายการที่ผ่านเกณฑ์ผลกระทบสูง พร้อมหลักฐานจากหลายสัญญาณ'],trending:['กระแสที่กำลังมา','เรื่องที่หลายสำนักเริ่มรายงาน พร้อมสัญญาณใหม่ที่ควรจับตา'],latest:['ข่าวล่าสุดทั้งหมด','เรียงตามเวลาที่แต่ละสำนักเผยแพร่ โดยไม่ตัดข่าวทั่วไปออก'],saved:['เก็บไว้อ่านในเวลาของคุณ','ข่าวที่บันทึกไว้ พร้อมกลับมาอ่านต่อได้ทุกเมื่อ']};
     $('#pageTitle').textContent=titles[state.view][0];$('#pageSubtitle').textContent=titles[state.view][1];
-    const items=listItems(),filtered=state.category!=='all'||state.query,showHero=state.view==='today'&&!filtered&&items.length;
+    const items=listItems(),filtered=state.category!=='all'||state.query,showHero=['today','alerts','trending'].includes(state.view)&&!filtered&&items.length;
     const priorities=(state.snapshot?.topIds||[]).map(id=>items.find(it=>it.id===id)).filter(Boolean);
     const hero=showHero?(priorities.find(it=>imageOf(it)&&it.language==='th')||priorities.find(it=>imageOf(it))||items.find(it=>imageOf(it))||priorities[0]||items[0]):null;
-    $('#heroContainer').innerHTML=hero?`<article class="hero-card ${imageOf(hero)?'has-image':''}" tabindex="0" role="button" data-open="${hero.id}" aria-label="อ่านข่าว ${esc(titleOf(hero))}">${photo(hero,'hero')}<div class="hero-copy"><div><div class="hero-kicker">${icon('sparkles')}THE DAILY FOCUS <span>· ${esc(categoryOf(hero).label)}</span></div><h2>${esc(titleOf(hero))}</h2>${hero.excerpt?`<p>${esc(hero.excerpt)}</p>`:''}</div><div class="hero-bottom">${meta(hero)}<span class="read-circle">${icon('arrow')}</span></div></div></article>`:'';
+    $('#heroContainer').innerHTML=hero?`<article class="hero-card ${imageOf(hero)?'has-image':''}" tabindex="0" role="button" data-open="${hero.id}" aria-label="อ่านข่าว ${esc(titleOf(hero))}">${photo(hero,'hero')}<div class="hero-copy"><div><div class="hero-kicker">${icon('sparkles')}DAILY FOCUS <span>· ${esc(categoryOf(hero).label)}</span>${signalBadge(hero)}</div><h2>${esc(titleOf(hero))}</h2>${hero.excerpt?`<p>${esc(hero.excerpt)}</p>`:''}</div><div class="hero-bottom">${meta(hero)}<span class="read-circle">${icon('arrow')}</span></div></div></article>`:'';
     const rest=hero?items.filter(it=>it.id!==hero.id):items,shown=rest.slice(0,state.limit);
     $('#newsCount').textContent=`${items.length.toLocaleString('th-TH')} ข่าว${state.view==='saved'?'ที่บันทึกไว้':''}`;
     $('#feed').setAttribute('aria-busy','false');
-    $('#feed').innerHTML=shown.length?`<div class="section-heading"><h2>${state.query?'ผลการค้นหา':state.view==='saved'?'ข่าวที่บันทึกไว้':state.view==='important'?'ประเด็นที่น่าติดตาม':'อ่านต่อรอบวัน'}</h2><span>${state.view==='important'?'คัดจากความใหม่และประเด็นสำคัญ':'อัปเดตต่อเนื่องจากหลายสำนัก'}</span></div>`+shown.map(it=>{const c=categoryOf(it);return `<article class="news-card"><button class="story-open ${imageOf(it)?'has-photo':''}" data-open="${it.id}"><div class="story-copy"><span class="category-label" style="--category:${c.color}">${c.label}</span><h3>${esc(titleOf(it))}</h3>${it.excerpt?`<p class="excerpt">${esc(it.excerpt)}</p>`:''}${meta(it)}</div>${photo(it,'thumb')}</button><button class="icon-button bookmark-button ${state.saved[it.id]?'saved':''}" data-save="${it.id}" aria-label="${state.saved[it.id]?'นำออกจาก':'เพิ่มใน'}ข่าวที่บันทึกไว้" aria-pressed="${!!state.saved[it.id]}">${icon('bookmark')}</button></article>`;}).join(''):`<div class="empty-state">${icon(state.view==='saved'?'bookmark':'search')}<h3>${state.view==='saved'?'เรื่องที่อยากอ่าน เก็บไว้ตรงนี้':'ยังไม่พบข่าวในช่วงนี้'}</h3><p>${state.view==='saved'?'แตะไอคอนบันทึกที่ข่าว แล้วกลับมาอ่านต่อได้ทุกเมื่อ':state.snapshot?.items?.length?'ลองเปลี่ยนหมวด ช่วงเวลา หรือคำค้นหา':'กำลังเตรียมข่าวล่าสุด หากยังไม่มีข้อมูลให้แตะอัปเดตอีกครั้ง'}</p></div>`;
+    const sectionTitle=state.query?'ผลการค้นหา':state.view==='saved'?'ข่าวที่บันทึกไว้':state.view==='alerts'?'ข่าวที่ควรรู้ตอนนี้':state.view==='trending'?'เรื่องที่กำลังขยับ':'อ่านต่อรอบวัน';
+    $('#feed').innerHTML=shown.length?`<div class="section-heading"><h2>${sectionTitle}</h2><span>${['alerts','trending'].includes(state.view)?'คัดและรวมเรื่องซ้ำให้อัตโนมัติ':'อัปเดตต่อเนื่องจากหลายสำนัก'}</span></div>`+shown.map(it=>{const c=categoryOf(it);return `<article class="news-card"><button class="story-open ${imageOf(it)?'has-photo':''}" data-open="${it.id}"><div class="story-copy"><div class="story-labels"><span class="category-label" style="--category:${c.color}">${c.label}</span>${signalBadge(it)}</div><h3>${esc(titleOf(it))}</h3>${it.excerpt?`<p class="excerpt">${esc(it.excerpt)}</p>`:''}${meta(it)}</div>${photo(it,'thumb')}</button><button class="icon-button bookmark-button ${state.saved[it.id]?'saved':''}" data-save="${it.id}" aria-label="${state.saved[it.id]?'นำออกจาก':'เพิ่มใน'}ข่าวที่บันทึกไว้" aria-pressed="${!!state.saved[it.id]}">${icon('bookmark')}</button></article>`;}).join(''):`<div class="empty-state">${icon(state.view==='saved'?'bookmark':'search')}<h3>${state.view==='saved'?'เรื่องที่อยากอ่าน เก็บไว้ตรงนี้':state.view==='alerts'?'ตอนนี้ยังไม่มีเหตุที่ผ่านเกณฑ์ Alert':'ยังไม่พบข่าวในช่วงนี้'}</h3><p>${state.view==='saved'?'แตะไอคอนบันทึกที่ข่าว แล้วกลับมาอ่านต่อได้ทุกเมื่อ':state.view==='alerts'?'ระบบกำลังติดตามต่อเนื่อง และจะเพิ่มเรื่องเมื่อมีน้ำหนักเพียงพอ':'ลองเปลี่ยนหมวด ช่วงเวลา หรือคำค้นหา'}</p></div>`;
     $('#loadMore').hidden=rest.length<=state.limit;
     const top=(state.snapshot?.topIds||[]).map(id=>(state.snapshot?.items||[]).find(it=>it.id===id)).filter(Boolean).slice(0,5);
     $('#topStories').innerHTML=top.length?top.map((it,i)=>`<button class="top-story" data-open="${it.id}"><span class="ordinal">${String(i+1).padStart(2,'0')}</span><div><h3>${esc(titleOf(it))}</h3><span>${esc(it.source)} · ${esc(shortTime(it.published_at))}</span></div></button>`).join(''):'<p class="muted">กำลังเตรียมประเด็นล่าสุด</p>';
-    renderFreshness();renderSources();
+    renderPulse();renderFreshness();renderSources();
   }
   function renderFreshness(offline=false){
     const at=state.snapshot?.updatedAt,stale=!at||Date.now()-Date.parse(at)>25*60000||offline;
     $('#freshness').classList.toggle('stale',stale);
     $('#freshness').innerHTML=`<i></i>${offline?'กำลังอ่านข่าวที่บันทึกไว้':at?`${stale?'ข้อมูลอาจล่าช้า · ':''}อัปเดต ${esc(fullTime(at))}`:'กำลังเตรียมข่าวครั้งแรก'}`;
+    $('#autoStatus').textContent=offline?'ออฟไลน์ · ใช้ข่าวที่บันทึกไว้':stale?'กำลังรอรอบถัดไป':'ทำงานอยู่ · ตรวจทุก 5 นาที';
   }
   function renderSources(){
     $('#sourceHealth').innerHTML=(state.snapshot?.health||[]).map(h=>`<div class="source-health-row"><span>${esc(h.name)}</span><span class="${h.status==='ok'?'healthy':''}">${h.status==='ok'?'พร้อมอ่าน':h.status==='empty'?'ยังไม่มีข่าวใหม่':'กำลังรอการอัปเดต'}${h.lastSuccessAt?' · '+esc(shortTime(h.lastSuccessAt)):''}</span></div>`).join('')||'<p class="setting-hint">กำลังรอสถานะแหล่งข่าว</p>';
@@ -81,16 +98,17 @@
   async function readSnapshot(){if(native)return nativeRequest('snapshot');if(window.google?.script?.run)return new Promise((resolve,reject)=>google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).apiGetSnapshot());return jsonp('snapshot');}
   async function refresh(silent=false){
     if(state.refreshing)return;state.refreshing=true;$('#refreshButton').classList.add('loading');$('#refreshButton').disabled=true;
-    try{const data=await readSnapshot();if(!data.ok||!data.snapshot)throw new Error(data.error||'ยังไม่มีข้อมูลข่าว');if(!Array.isArray(data.snapshot.items))throw new Error('ข้อมูลข่าวไม่สมบูรณ์');state.snapshot=data.snapshot;save('tdn.snapshot',state.snapshot);render();if(state.pending)openArticle(state.pending);if(!silent)toast(data.snapshot.items.length?'อัปเดตรายการข่าวแล้ว':'กำลังรวบรวมข่าวครั้งแรก กรุณารอสักครู่');}
+    try{const data=await readSnapshot();if(!data.ok||!data.snapshot)throw new Error(data.error||'ยังไม่มีข้อมูลข่าว');if(!Array.isArray(data.snapshot.items))throw new Error('ข้อมูลข่าวไม่สมบูรณ์');const oldTopics=new Set((state.snapshot?.items||[]).map(it=>it.topic_id||it.id));state.snapshot=data.snapshot;save('tdn.snapshot',state.snapshot);render();if(state.pending)openArticle(state.pending);const newSignals=data.snapshot.items.filter(it=>it.alert_eligible&&!oldTopics.has(it.topic_id||it.id)&&['breaking','major'].includes(it.signal));if(silent&&oldTopics.size&&newSignals.length)toast(`มี${newSignals[0].signal==='breaking'?'ข่าวด่วน':'ข่าวใหญ่'}ใหม่ ${newSignals.length} เรื่อง · อัปเดตให้แล้ว`);if(!silent)toast(data.snapshot.items.length?'อัปเดตรายการข่าวแล้ว':'กำลังรวบรวมข่าวครั้งแรก กรุณารอสักครู่');}
     catch(error){if(!state.snapshot)render();renderFreshness(true);if(!silent)toast(error.message||'ยังเชื่อมต่อไม่ได้ ข่าวที่บันทึกไว้ยังอ่านได้');}
     finally{state.refreshing=false;$('#refreshButton').classList.remove('loading');$('#refreshButton').disabled=false;}
   }
   async function summarize(id){const button=$('#summarizeButton');if(!button)return;button.disabled=true;button.innerHTML=icon('refresh')+' กำลังเตรียมสรุป';try{const res=await command({action:'summary',id});if(!res.ok)throw new Error(res.error);save('tdn.summary.'+id,{hash:getItem(id).content_hash,text:res.summary});if(state.selected===id){$('#aiResult').textContent=res.summary;button.hidden=true;}}catch(error){toast(error.message||'ยังสรุปไม่ได้ ลองอีกครั้งภายหลัง');}finally{button.disabled=false;button.innerHTML=icon('sparkles')+' ช่วยแปลและสรุปข่าวนี้';}}
   function updateSettings(){
-    $('#importantOnly').checked=!!preferences.importantOnly;$('#quietHours').checked=preferences.quietHours!==false;
+    $('#quietHours').checked=preferences.quietHours!==false;
+    $$('[data-alert-mode]').forEach(el=>el.classList.toggle('active',el.dataset.alertMode===preferences.alertMode));
     $('#notifyDot').hidden=!preferences.enabled;
     $('#enableNotifications').textContent=preferences.enabled?'เปิดการแจ้งเตือนแล้ว':'เปิดการแจ้งเตือน';
-    $('#notificationStatus').textContent=preferences.enabled?(native?'แจ้งเตือนตามหมวดที่เลือก ระบบ Android จัดรอบตรวจเบื้องหลังให้':'พร้อมรับข่าวใหม่ แม้ไม่ได้เปิดหน้าข่าวไว้'):'คุณเลือกเปิดหรือปิดได้ทุกเมื่อ';
+    $('#notificationStatus').textContent=preferences.enabled?(native?'เปิดแล้ว · Android ตรวจข่าวเบื้องหลังและแยกช่องข่าวด่วนกับข่าวใหญ่':'เปิดแล้ว · พร้อมรับเฉพาะสัญญาณตามระดับที่เลือก'):'ปิดอยู่ · เปิดเมื่อพร้อมรับเฉพาะข่าวที่ผ่านเกณฑ์';
     $('#notifyCategories').innerHTML=`<button class="preference-chip ${!preferences.categories.length?'selected':''}" data-notify-category="all">ทุกหมวด</button>`+categories.map(c=>`<button class="preference-chip ${preferences.categories.includes(c.id)?'selected':''}" data-notify-category="${c.id}">${c.label}</button>`).join('');
     $$('[data-theme-choice]').forEach(el=>el.classList.toggle('active',el.dataset.themeChoice===document.documentElement.dataset.theme));
     if(native){$('#installButton').hidden=true;$('#installDescription').textContent='คุณกำลังใช้แอป Android พร้อมการแจ้งเตือนและวิดเจ็ต แตะขนาดวิดเจ็ตด้านบนเพื่อเพิ่มบนหน้าจอหลัก';$('#apkDownload').hidden=true;$('#desktopInstall').hidden=true;}
@@ -98,7 +116,7 @@
   let settingsTimer;
   function persistPreferences(){preferences.timezoneOffset=new Date().getTimezoneOffset();save('tdn.preferences',preferences);updateSettings();if(native){NativeNews.setSettings(JSON.stringify(preferences));return;}swRegistration?.active?.postMessage({type:'preferences',preferences});clearTimeout(settingsTimer);if(preferences.enabled)settingsTimer=setTimeout(()=>registerPush(false).catch(error=>toast(error.message)),1200);}
   function showSettings(){updateSettings();$('#settingsDialog').showModal();renderSources();}
-  function setTheme(theme){document.documentElement.dataset.theme=theme;save('tdn.theme',theme);$('#themeButton').innerHTML=icon(theme==='dark'?'sun':'moon');updateSettings();if(native)NativeNews.setTheme(theme);}
+  function setTheme(theme){document.documentElement.dataset.theme=theme;save('tdn.theme',theme);$('meta[name="theme-color"]').content=theme==='dark'?'#09111c':'#f2f0ea';$('#themeButton').innerHTML=icon(theme==='dark'?'sun':'moon');updateSettings();if(native)NativeNews.setTheme(theme);}
   async function prepareSW(){if(native||!('serviceWorker'in navigator)||location.hostname.includes('googleusercontent'))return null;try{swRegistration=await navigator.serviceWorker.register('./service-worker.js',{scope:'./'});return await navigator.serviceWorker.ready;}catch{return null;}}
   function vapidBytes(s){return Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-s.length%4)%4)),c=>c.charCodeAt(0));}
   async function registerPush(ask=true){
@@ -134,6 +152,7 @@
     if(el.dataset.action==='settings'){showSettings();return;}
     if(el.hasAttribute('data-close-dialog')){el.closest('dialog').close();return;}
     if(el.dataset.themeChoice){setTheme(el.dataset.themeChoice);return;}
+    if(el.dataset.alertMode){preferences.alertMode=el.dataset.alertMode;persistPreferences();return;}
     if(el.dataset.notifyCategory){const cat=el.dataset.notifyCategory;if(cat==='all')preferences.categories=[];else if(preferences.categories.includes(cat)){if(preferences.categories.length===1){toast('เลือกอย่างน้อยหนึ่งหมวด หรือเลือกทุกหมวด');return;}preferences.categories=preferences.categories.filter(c=>c!==cat);}else preferences.categories=[...preferences.categories,cat];persistPreferences();return;}
     if(el.dataset.widget){if(native)NativeNews.pinWidget(el.dataset.widget);else{toast('วิดเจ็ตใช้ได้ในแอป Android ดาวน์โหลด APK ในหน้านี้ได้เลย');$('#apkDownload').scrollIntoView({behavior:'smooth',block:'center'});}return;}
     if(el.dataset.external&&native){event.preventDefault();NativeNews.openExternal(el.dataset.external);return;}
@@ -145,13 +164,13 @@
   $('#closeArticle').addEventListener('click',closeArticle);$('#drawerBackdrop').addEventListener('click',closeArticle);
   $('#themeButton').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
   $('#enableNotifications').addEventListener('click',enableNotifications);$('#disableNotifications').addEventListener('click',disableNotifications);$('#testNotification').addEventListener('click',testNotification);
-  $('#importantOnly').addEventListener('change',event=>{preferences.importantOnly=event.target.checked;persistPreferences();});$('#quietHours').addEventListener('change',event=>{preferences.quietHours=event.target.checked;persistPreferences();});
+  $('#quietHours').addEventListener('change',event=>{preferences.quietHours=event.target.checked;persistPreferences();});
   $('#installButton').addEventListener('click',showInstall);$('#desktopInstall').addEventListener('click',()=>{$('#settingsDialog').close();showInstall();});$('#installNow').addEventListener('click',async()=>{if(installPrompt){await installPrompt.prompt();installPrompt=null;}});
   $('#sourcesButton').addEventListener('click',()=>{showSettings();$('.source-settings').scrollIntoView({behavior:'smooth'});});
   $$('dialog').forEach(d=>d.addEventListener('click',event=>{if(event.target===d){const r=d.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)d.close();}}));
   window.TDN_BACK=()=>{const dialog=$$('dialog').find(d=>d.open);if(dialog){dialog.close();return true;}if(state.selected){closeArticle();return true;}if(state.view!=='today'||state.category!=='all'||state.query){state.category='all';state.query='';$('#searchInput').value='';setView('today');return true;}return false;};
   $('#editionDate').textContent=new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  paintIcons();setTheme(load('tdn.theme','dark'));renderNavigation();updateSettings();
+  paintIcons();setTheme(load('tdn.theme',matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));renderNavigation();updateSettings();
   try{state.snapshot=native?JSON.parse(NativeNews.getCachedSnapshot()):load('tdn.snapshot',null);if(state.snapshot?.items)render();else state.snapshot=null;}catch{state.snapshot=null;}
   const initialParams=new URLSearchParams(location.search),initialId=initialParams.get('article');if(initialId)state.pending=initialId;if(views.some(v=>v.id===initialParams.get('view')))state.view=initialParams.get('view');
   if(native){try{const id=NativeNews.getInitialArticle();if(id)state.pending=id;}catch{}}
