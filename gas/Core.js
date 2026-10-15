@@ -102,6 +102,9 @@ var TDCore = (function () {
     (previous||[]).concat(incoming||[]).forEach(function(it){
       if(!it||!it.id||Date.parse(it.published_at)<now-72*3600000||/(?:^|\.)(?:facebook\.com|fb\.com|youtube\.com|tiktok\.com|vietnam\.vn|pinterest\.com)$/.test(it.host)||it.title.length>260)return;
       if(old[it.id])it=Object.assign({},it,{first_seen_at:old[it.id].first_seen_at||it.first_seen_at});
+      // The same headline can arrive later from Google while its publisher feed is not due.
+      // Keep the publisher record: Google contributes no article body or direct URL.
+      if(map[it.id]&&!/^google-/.test(map[it.id].adapter||'')&&host(map[it.id].url)!=='news.google.com'&&(/^google-/.test(it.adapter||'')||host(it.url)==='news.google.com'))it=Object.assign({},it,map[it.id]);
       if(map[it.id]&&map[it.id].excerpt&&!it.excerpt)it=Object.assign({},it,{excerpt:map[it.id].excerpt,snippet:map[it.id].excerpt});
       it=Object.assign({},it);
         if(map[it.id]&&map[it.id].metadata_checked_at&&!it.metadata_checked_at)it.metadata_checked_at=map[it.id].metadata_checked_at;

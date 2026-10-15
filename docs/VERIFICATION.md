@@ -1,5 +1,14 @@
 # Verification · 2026-10-15
 
+## 2.5.1 · Publisher context and automatic Thai summaries
+
+- Application source: `0e48b44c1cf3887667122baf5d5424ed6ede5110`. [Build, lint, signing and Android 11/15 device checks passed](https://github.com/BassSG/Thai_Daily_News/actions/runs/38763882079). Inspected the native reader screenshot and its headline-only fallback.
+- RSS ingestion chooses the longer description or encoded/Atom content, keeps paragraph boundaries and a bounded publisher lead of about 1,200 characters. Public metadata enrichment shares the existing bounded image requests. Google cluster lists remain excluded.
+- The reader starts Thai summarization automatically on opening a story with at least 80 characters of source content. AI receives the richer lead, uses the existing global 10-new-requests/day cap, and reuses cached results. Headline-only records make no AI call. No new API provider or credentials were added.
+- 30 Node tests passed locally, including source-text cleaning, metadata article identity, retention across refreshes, summary fact inputs, quota/cache behavior and protection against Google records overwriting publisher content. The release CI ran the first 26 tests; the remaining server regressions were verified locally after the APK build.
+- GAS deployment 73 includes a reader schema migration that re-reads feeds without conditional HTTP validators, plus protection for direct publisher records on subsequent Google refreshes. The scheduled 5-minute trigger and existing endpoint remain in use. Owner bootstrap remains disabled.
+- APK versionCode 20501/versionName 2.5.1 uses the existing signing identity. Downloaded the public stable APK and verified SHA-256 `d815fc51c7d36b1e82851b8e58f06f6cf420ec291e545a2ca72ab5c9ffad6e0a` against the tested artifact. Release: [v2.5.1](https://github.com/BassSG/Thai_Daily_News/releases/tag/v2.5.1).
+
 ## 2.5 · Your Daily Perspective
 
 Release source: `4ad5cb60d16d850b97703dd0c878f31415d0e9f1`. [Successful build, signing, release lint and Android 11/15 device checks](https://github.com/BassSG/Thai_Daily_News/actions/runs/38751628467).

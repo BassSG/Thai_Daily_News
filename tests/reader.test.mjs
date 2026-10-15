@@ -16,3 +16,7 @@ test('refresh preserves richer text and summary hashes follow source facts',()=>
  const changed=core.merge([first],[{...a,reading_text:a.reading_text+' และมีการประกาศพื้นที่เพิ่มเติมในวันนี้'}],now)[0];assert.notEqual(changed.content_hash,first.content_hash);
  const google=core.merge([],[{...a,adapter:'google-th',reading_text:'พาดหัวข่าวคนละข่าวจากรายการ Google'}],now)[0];assert.equal(google.reading_text,'');
 });
+test('a Google refresh cannot replace the same publisher story with a headline-only record',()=>{
+ const now=Date.now(),item={id:'story',title:'รัฐบาลประกาศมาตรการช่วยเหลือประชาชน',url:'https://publisher.example/news/1',host:'publisher.example',published_at:new Date(now).toISOString(),adapter:'infoquest',excerpt:'เนื้อหาจริงจากสำนักข่าว',reading_text:'เนื้อหาย่อหน้าที่อ่านแล้วเข้าใจเหตุการณ์ได้จากสำนักข่าว',category_id:'politics'};
+ const google={...item,adapter:'google-politics',url:'https://news.google.com/rss/articles/1',excerpt:'พาดหัวอื่น',reading_text:''},result=core.merge([item],[google],now)[0];assert.equal(result.url,item.url);assert.equal(result.adapter,item.adapter);assert.equal(result.reading_text,item.reading_text);assert.equal(result.excerpt,item.excerpt);
+});

@@ -1,0 +1,11 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
+function service(item,{count=0,cached}={}){
+ let calls=0,prompt='',usage={day:'2026-10-15',count};const props={getProperty:k=>k==='TD_AI_USAGE'?JSON.stringify(usage):k==='OPENROUTER_API_KEY'?'test-key':null,setProperty:(k,v)=>{if(k==='TD_AI_USAGE')usage=JSON.parse(v);}},cache=cached?{[item.id+'_'+item.content_hash]:{text:cached,at:Date.now()}}:{};
+ const ctx=vm.createContext({Date,Math,Number,String,Object,Array,JSON,LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},Utilities:{formatDate:()=> '2026-10-15'},UrlFetchApp:{fetch:(_,options)=>{calls++;prompt=JSON.parse(options.payload).messages[1].content;return {getResponseCode:()=>200,getContentText:()=>JSON.stringify({choices:[{message:{content:'สรุปจากเนื้อหาที่ส่งมา'}}]})};}}});
+ vm.runInContext(fs.readFileSync('gas/Server.js','utf8'),ctx);ctx.tdReadSnapshot_=()=>({items:[item]});ctx.tdProps_=()=>props;ctx.tdReadMap_=()=>cache;ctx.tdWriteMap_=()=>{};ctx.tdPack_=x=>JSON.stringify(x);
+ return {run:()=>ctx.apiSummarizeSingleArticle({id:item.id}),calls:()=>calls,prompt:()=>prompt,usage:()=>usage.count};
+}
+const item={id:'abcdef0123456789',content_hash:'h',title:'พาดหัวข่าว',source:'สำนักข่าว',excerpt:'ข้อความสั้น',reading_text:'รายละเอียดที่ได้รับจากสำนักข่าว '.repeat(15)+'ข้อเท็จจริงสำคัญท้ายย่อหน้า'};
+test('AI receives the richer publisher lead rather than a truncated card excerpt',()=>{const s=service(item);assert.equal(s.run().ok,true);assert.ok(s.prompt().includes('ข้อเท็จจริงสำคัญท้ายย่อหน้า'));assert.equal(s.calls(),1);assert.equal(s.usage(),1);});
+test('headline-only records do not spend AI quota or fabricate detail',()=>{const s=service({...item,reading_text:''});assert.equal(s.run().ok,false);assert.equal(s.calls(),0);assert.equal(s.usage(),0);});
+test('automatic summaries retain the existing global cap and reuse server cache',()=>{const capped=service(item,{count:10});assert.equal(capped.run().ok,false);assert.equal(capped.calls(),0);const cached=service(item,{count:10,cached:'สรุปเดิม'});assert.equal(cached.run().summary,'สรุปเดิม');assert.equal(cached.calls(),0);assert.equal(cached.usage(),10);});
