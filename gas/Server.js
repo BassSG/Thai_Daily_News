@@ -103,20 +103,32 @@ function apiGetArticle(payload){
 }
 function apiRefresh(){return apiGetSnapshot();} // Reader refresh never initiates paid searches or ingestion.
 
+function tdFeedDate_(value){
+  value=String(value||'').trim();
+  var thai=value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if(!thai)return value;
+  var year=Number(thai[3]);if(year>2400)year-=543;
+  return new Date(Date.UTC(year,Number(thai[2])-1,Number(thai[1]),Number(thai[4])-7,Number(thai[5]),Number(thai[6]||0))).toISOString();
+}
 function tdParseFeed_(xml,source,now){
   var root=XmlService.parse(xml).getRootElement(),channel=root.getChild('channel'),nodes=[];
   if(channel)nodes=channel.getChildren('item');
   else if(root.getName()==='feed')nodes=root.getChildren('entry',root.getNamespace());
   else throw new Error('ไม่ใช่ฟีด RSS/Atom');
-  var out=[];
-  nodes.slice(0,100).forEach(function(node){
+  var channelPublished=channel&&channel.getChild('pubDate')?channel.getChild('pubDate').getText():'',out=[];
+  // The TMD earthquake feed timestamps only the channel. Use that timestamp for
+  // its newest record and ignore the undated archive so old tremors cannot alert.
+  var limit=source.id==='tmd-earthquake'?1:100;
+  nodes.slice(0,limit).forEach(function(node){
     var ns=node.getNamespace();
     function child(name){return node.getChild(name)||node.getChild(name,ns);}
     function text(name){var c=child(name);return c?c.getText():'';}
     var link=text('link');
     if(!link){var ln=child('link');if(ln&&ln.getAttribute('href'))link=ln.getAttribute('href').getValue();}
+    if(!link&&source.id.indexOf('tmd-')===0)link=source.home;
     var src=child('source'),sourceName=src?src.getText():source.name,sourceUrl=src&&src.getAttribute('url')?src.getAttribute('url').getValue():source.home;
-    var item=TDCore.normalize({title:text('title'),url:link,published:text('pubDate')||text('published')||text('updated'),excerpt:text('description')||text('summary'),source:sourceName,sourceUrl:sourceUrl},source,now);
+    var published=text('pubDate')||text('published')||text('updated')||(source.id==='tmd-earthquake'?channelPublished:'');
+    var item=TDCore.normalize({title:text('title'),url:link,published:tdFeedDate_(published),excerpt:text('description')||text('summary'),source:sourceName,sourceUrl:sourceUrl},source,now);
     if(item){var encoded=node.getChildren().filter(function(c){return c.getName()==='encoded';})[0];item.image_url=TDImages.feed(node,text('description')||text('summary')||(encoded?encoded.getText():''),link);if(item.image_url)item.image_origin='rss';out.push(item);}
   });
   return out;
@@ -163,7 +175,7 @@ function tdRefresh_(force){
     var alerts=uniqueTopics(dayItems.filter(function(it){return it.alert_eligible&&(it.signal==='breaking'||it.signal==='major');}).sort(function(a,b){return b.score-a.score;}),12);
     var trends=uniqueTopics(dayItems.filter(function(it){return it.scope!=='world'&&(it.signal==='trending'||it.signal==='rising');}).sort(function(a,b){return b.score-a.score;}),20);
     function topicCount(list){var seen={};list.forEach(function(it){seen[it.topic_id||it.id]=true;});return Object.keys(seen).length;}
-    var snap={version:TD_VERSION,updatedAt:successes?new Date(now).toISOString():previous.updatedAt||null,updated_at:successes?Utilities.formatDate(new Date(now),'Asia/Bangkok','yyyy-MM-dd HH:mm'):previous.updated_at||null,lastCheckedAt:new Date(now).toISOString(),categories:TDCore.categories,items:items,topIds:top.map(function(it){return it.id;}),alertIds:alerts.map(function(it){return it.id;}),trendIds:trends.map(function(it){return it.id;}),health:TD_SOURCE_DEFS.map(function(s){return health[s.id]||{id:s.id,name:s.name,status:'pending'};}),stats:{items_total:items.length,new_items:fresh.length,breaking:topicCount(dayItems.filter(function(it){return it.signal==='breaking';})),major:topicCount(dayItems.filter(function(it){return it.signal==='major';})),trending:topicCount(dayItems.filter(function(it){return it.scope!=='world'&&(it.signal==='trending'||it.signal==='rising');})),sources_ok:Object.keys(health).filter(function(k){return health[k].status==='ok';}).length,sources_total:TD_SOURCE_DEFS.length},brief:{daily_bullets:top.map(function(it){return {id:it.id,text:it.title};}),top_stories:top.map(function(it){return {id:it.id,title:it.title,summary:it.excerpt,category:it.category,url:it.url,signal:it.signal};})}};
+    var snap={version:TD_VERSION,updatedAt:successes?new Date(now).toISOString():previous.updatedAt||null,updated_at:successes?Utilities.formatDate(new Date(now),'Asia/Bangkok','yyyy-MM-dd HH:mm'):previous.updated_at||null,lastCheckedAt:new Date(now).toISOString(),categories:TDCore.categories,items:items,topIds:top.map(function(it){return it.id;}),alertIds:alerts.map(function(it){return it.id;}),trendIds:trends.map(function(it){return it.id;}),health:TD_SOURCE_DEFS.map(function(s){return health[s.id]||{id:s.id,name:s.name,status:'pending'};}),stats:{items_total:items.length,new_items:fresh.length,breaking:topicCount(dayItems.filter(function(it){return it.signal==='breaking';})),major:topicCount(dayItems.filter(function(it){return it.signal==='major';})),trending:topicCount(dayItems.filter(function(it){return it.scope!=='world'&&(it.signal==='trending'||it.signal==='rising');})),sources_ok:Object.keys(health).filter(function(k){return health[k].status==='ok'||health[k].status==='empty';}).length,sources_total:TD_SOURCE_DEFS.length},brief:{daily_bullets:top.map(function(it){return {id:it.id,text:it.title};}),top_stories:top.map(function(it){return {id:it.id,title:it.title,summary:it.excerpt,category:it.category,url:it.url,signal:it.signal};})}};
     tdSaveSnapshot_(snap);
     if(previous.items&&previous.items.length&&fresh.length)tdSendPush_(fresh,now);
     return {ok:true,items:items.length,newItems:fresh.length,sources:successes,updatedAt:snap.updatedAt};
