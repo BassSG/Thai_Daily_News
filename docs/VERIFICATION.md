@@ -1,4 +1,15 @@
-# Verification · 2026-10-15
+# Verification · 2026-10-26
+
+## 2.5.2 · Source context, summary budgets and notification reliability
+
+- Application change: `6727926afb947c842b692ac18bb82c3b5bbd8961`; Android screenshot synchronization follow-up: `91ddaebed226ae50a51ccec4ee4cc2745244d34c`. [First successful build, lint, signing and Android 11/15 functional checks](https://github.com/BassSG/Thai_Daily_News/actions/runs/40213772434). The follow-up waits for WebView visual-state callbacks and presentation frames before capturing screenshots, because Android 15 screenshots could otherwise show a previous frame.
+- [Final successful build and Android 11/15 run](https://github.com/BassSG/Thai_Daily_News/actions/runs/40214320316). Inspected the final Android 15 home and reader screenshots with publisher photographs fully painted. Final APK SHA-256: `85531973b68b2a36aa9cc659676d942c19abb5e19ffeef6a419c74c8e6291cf5`.
+- 44 Node tests pass, including Media RSS before encoded/Atom content, article identity in JSON-LD graphs, rejection of unrelated JSON-LD, publisher lead/excerpt retention, realistic alert negatives and official-source exceptions, Thai whitespace matching, priority-story storage retention, cache-only API propagation, failed/empty AI responses, request limits, and switching A → B → A while summaries are pending.
+- Responsive browser QA at 390×844 and 1440×960 found no horizontal document overflow. Mobile list excerpts are limited to two lines. Live reader QA showed multiple publisher paragraphs; routine Thai news returned a server-cache miss and restored the optional summary button without starting AI work.
+- GAS deployment 77 uses reader schema 2 and the existing endpoint/5-minute trigger. Live schema migration verified version 2.5.2 with 165 retained stories and 62 publisher leads of at least 200 characters, with no feed errors in that sample. A live `onlyCached: true` POST returned `CACHE_MISS`. No paid AI request was needed for this verification; provider success/failure/quota cases use mocked responses.
+- Android regressions verify disk-cache replacement/restoration, preserving unseen inbox stories across refreshes, and separate tap targets for major and breaking notifications. Existing widget paging, wrapping, vertical scrolling, bookmarks, photograph caching, photo opt-out, collection-size limits and source URL checks remain covered on API 30 and 35.
+- APK versionCode 20502/versionName 2.5.2 retains signing certificate SHA-256 `b61ab53da8023a7f8b5511dd964ea904934d1b6b4adb528ea5f4090c98b74fb2`. Build metadata and packaged web/GAS scripts are generated from the version in package.json.
+- Deliberate scope: no automatic cross-article photograph sharing, no eviction of live push subscriptions at capacity, no blanket deletion on push 400/401/403, no unverified Intl-based clustering, and no removal of legacy API aliases. AI endpoints remain public and globally budgeted; rate limits do not establish per-user authorization. Snapshot retention varies with content size.
 
 ## 2.5.1 · Publisher context and automatic Thai summaries
 
