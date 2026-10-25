@@ -21,3 +21,16 @@ test('a Google refresh cannot replace the same publisher story with a headline-o
  const now=Date.now(),item={id:'story',title:'รัฐบาลประกาศมาตรการช่วยเหลือประชาชน',url:'https://publisher.example/news/1',host:'publisher.example',published_at:new Date(now).toISOString(),adapter:'infoquest',excerpt:'เนื้อหาจริงจากสำนักข่าว',reading_text:'เนื้อหาย่อหน้าที่อ่านแล้วเข้าใจเหตุการณ์ได้จากสำนักข่าว',category_id:'politics'};
  const google={...item,adapter:'google-politics',url:'https://news.google.com/rss/articles/1',excerpt:'พาดหัวอื่น',reading_text:''},result=core.merge([item],[google],now)[0];assert.equal(result.url,item.url);assert.equal(result.adapter,item.adapter);assert.equal(result.reading_text,item.reading_text);assert.equal(result.excerpt,item.excerpt);
 });
+test('RSS text selection ignores Media RSS images before encoded or Atom content',()=>{
+ const child=(name,text,uri='',attributes={})=>({getName:()=>name,getText:()=>text,getNamespace:()=>({getURI:()=>uri}),getAttribute:name=>attributes[name]||null});const body='เนื้อหาสำนักข่าวที่ให้รายละเอียดมากกว่าพาดหัวอย่างครบถ้วน '.repeat(8),image=child('content','', 'http://search.yahoo.com/mrss/',{url:'https://cdn.example/cover.jpg'}),encoded=child('encoded',body,'http://purl.org/rss/1.0/modules/content/');
+ assert.equal(reader.nodeContent({getChildren:()=>[image,encoded]}),body);assert.equal(reader.nodeContent({getChildren:()=>[image,child('content',body,'http://www.w3.org/2005/Atom')]}),body);
+});
+test('JSON-LD selects the current article in a graph and ignores unrelated article bodies',()=>{
+ const url='https://publisher.example/news/1',body='รายละเอียดข่าวจากต้นฉบับซึ่งอธิบายสถานการณ์ได้อย่างครบถ้วน '.repeat(9),description='คำอธิบายย่อของบทความนี้จากสำนักข่าว';
+ const html=`<head><meta property="og:url" content="${url}"><meta property="og:type" content="article"><meta property="og:description" content="${description}"></head><script type="application/ld+json">${JSON.stringify({'@graph':[{'@type':'Organization',description:body},{'@type':'NewsArticle',url:'https://publisher.example/news/2',articleBody:body+' ข่าวอื่น'},{'@type':['CreativeWork','NewsArticle'],mainEntityOfPage:{'@id':url},articleBody:body}]})}</script>`;
+ assert.equal(reader.meta(html,url,''),reader.lead(body,''));assert.equal(reader.meta(html.replaceAll(url,'https://publisher.example/news/3'),url,''),'');assert.equal(reader.meta('<script type="application/ld+json">{broken}</script>',url,''),'');
+});
+test('publisher metadata leads keep their matching card excerpt on a shorter RSS refresh',()=>{
+ const now=Date.now(),old={id:'lead',title:'รัฐบาลประกาศมาตรการใหม่',url:'https://publisher.example/news/1',host:'publisher.example',adapter:'publisher',published_at:new Date(now).toISOString(),category_id:'politics',reading_origin:'publisher',reading_text:'รายละเอียดประกาศจากสำนักข่าวที่อธิบายสถานการณ์อย่างครบถ้วน '.repeat(4),excerpt:'ข้อความเก่า'};
+ const merged=core.merge([old],[{...old,reading_origin:'rss',reading_text:'ข้อความสั้นจาก RSS',excerpt:'ข้อความสั้นจาก RSS'}],now)[0];assert.equal(merged.excerpt,core.clean(old.reading_text).slice(0,320));assert.equal(merged.snippet,merged.excerpt);
+});

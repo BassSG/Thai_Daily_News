@@ -20,10 +20,15 @@ public final class NewsRepository {
     public static final String BREAKING_CHANNEL="thai_daily_breaking_v2";
     public static final ExecutorService IO=Executors.newSingleThreadExecutor();
     public static final ExecutorService IMAGE_IO=Executors.newSingleThreadExecutor();
+    private static final Object CACHE_LOCK=new Object();
+    private static JSONObject memorySnapshot;
+    private static String memoryPath="";
+    private static long memoryModified=-1,memoryLength=-1;
     private NewsRepository(){}
     public static android.content.SharedPreferences prefs(Context c){return c.getSharedPreferences("thai_daily",Context.MODE_PRIVATE);}
     public static JSONObject settings(Context c){try{return new JSONObject(prefs(c).getString("settings","{}"));}catch(Exception e){return new JSONObject();}}
-    public static JSONObject cached(Context c){try{return new JSONObject(new String(java.nio.file.Files.readAllBytes(new File(c.getFilesDir(),"news.json").toPath()),StandardCharsets.UTF_8));}catch(Exception e){return new JSONObject();}}
+    // All callers treat this shared snapshot and its child objects as read-only.
+    public static JSONObject cached(Context c){synchronized(CACHE_LOCK){File file=new File(c.getFilesDir(),"news.json");try{if(memorySnapshot!=null&&memoryPath.equals(file.getAbsolutePath())&&memoryModified==file.lastModified()&&memoryLength==file.length())return memorySnapshot;JSONObject value=new JSONObject(new String(java.nio.file.Files.readAllBytes(file.toPath()),StandardCharsets.UTF_8));memorySnapshot=value;memoryPath=file.getAbsolutePath();memoryModified=file.lastModified();memoryLength=file.length();return value;}catch(Exception e){return new JSONObject();}}}
     public static JSONArray bookmarks(Context c){try{return new JSONArray(prefs(c).getString("bookmarks","[]"));}catch(Exception e){return new JSONArray();}}
     static boolean trustedApiHost(String value){try{URI uri=URI.create(value);String host=uri.getHost();return "https".equals(uri.getScheme())&&host!=null&&(host.equals("script.google.com")||host.endsWith(".googleusercontent.com"));}catch(Exception e){return false;}}
     public static JSONObject request(String url,JSONObject payload)throws Exception{
@@ -54,6 +59,7 @@ public final class NewsRepository {
         File temp=new File(c.getFilesDir(),"news-next.json"),dest=new File(c.getFilesDir(),"news.json");
         try(FileOutputStream out=new FileOutputStream(temp)){out.write(snapshot.toString().getBytes(StandardCharsets.UTF_8));out.getFD().sync();}
         java.nio.file.Files.move(temp.toPath(),dest.toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING,java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        synchronized(CACHE_LOCK){memorySnapshot=snapshot;memoryPath=dest.getAbsolutePath();memoryModified=dest.lastModified();memoryLength=dest.length();}
         prefs(c).edit().putLong("last_success",System.currentTimeMillis()).apply();
         if(notify)notifyNew(c,old,snapshot);
         NewsWidgetProvider.updateAll(c);if(widgetPhotos)NewsJobService.refreshWidgetPhotos(c);return response;
@@ -73,18 +79,18 @@ public final class NewsRepository {
         int hour=LocalTime.now().getHour();boolean quiet=setting.optBoolean("quietHours",true)&&(hour>=22||hour<7);
         long now=System.currentTimeMillis();
         JSONArray previous=old.optJSONArray("items"),items=snapshot.optJSONArray("items");if(previous==null||previous.length()==0||items==null)return;
-        Set<String> ids=new HashSet<>();for(int i=0;i<previous.length();i++)ids.add(previous.optJSONObject(i).optString("id"));
         Set<String> sent=new HashSet<>();try{JSONArray remembered=new JSONArray(prefs(c).getString("notified_topics","[]"));for(int i=0;i<remembered.length();i++)sent.add(remembered.optString(i));}catch(Exception ignored){}
-        ArrayList<JSONObject> news=new ArrayList<>();for(int i=0;i<items.length();i++){JSONObject item=items.optJSONObject(i);if(item==null)continue;String topic=item.optString("topic_id",item.optString("id"));if(!ids.contains(item.optString("id"))&&!sent.contains(topic)&&now-timestamp(item.optString("published_at"))<3*3600_000L&&matches(item,setting)&&(!quiet||item.optString("signal").equals("breaking")))news.add(item);}
+        ArrayList<JSONObject> news=new ArrayList<>();for(int i=0;i<items.length();i++){JSONObject item=items.optJSONObject(i);if(item==null)continue;String topic=item.optString("topic_id",item.optString("id"));long age=now-timestamp(item.optString("published_at"));if(!sent.contains(topic)&&age>=0&&age<3*3600_000L&&matches(item,setting)&&(!quiet||item.optString("signal").equals("breaking")))news.add(item);}
         if(news.isEmpty())return;createChannel(c);
         news.sort((a,b)->Double.compare(b.optDouble("score"),a.optDouble("score")));boolean breaking=news.get(0).optString("signal").equals("breaking");
         if(!breaking&&now-prefs(c).getLong("last_notification",0)<30*60_000L)return;
         JSONObject first=news.get(0);Intent intent=new Intent(c,MainActivity.class).putExtra("article",first.optString("id")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent open=PendingIntent.getActivity(c,101,intent,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent open=PendingIntent.getActivity(c,breaking?202:200,intent,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         Notification.InboxStyle style=new Notification.InboxStyle();for(int i=0;i<Math.min(3,news.size());i++)style.addLine(news.get(i).optString("title"));
         String title=breaking?"ข่าวด่วน · Thai Daily":"ข่าวใหญ่ · Thai Daily";int sources=first.optInt("source_count",1);String context=sources>1?"ติดตามจาก "+sources+" แหล่งข่าว":"คัดจากผลกระทบและความใหม่";
         Notification notification=new Notification.Builder(c,breaking?BREAKING_CHANNEL:CHANNEL).setSmallIcon(R.drawable.ic_notification).setColor(Color.rgb(194,77,65)).setContentTitle(title).setContentText(first.optString("title")).setSubText(context).setStyle(style).setContentIntent(open).setAutoCancel(true).setCategory(Notification.CATEGORY_RECOMMENDATION).setVisibility(Notification.VISIBILITY_PUBLIC).setOnlyAlertOnce(true).build();
-        JSONArray remembered=new JSONArray();for(String topic:sent)if(remembered.length()<30)remembered.put(topic);for(int i=0;i<Math.min(3,news.size());i++)remembered.put(news.get(i).optString("topic_id",news.get(i).optString("id")));while(remembered.length()>30)remembered.remove(0);
+        // Inbox rows share one tap target; only that target has actually been delivered.
+        JSONArray remembered=new JSONArray();for(String topic:sent)if(remembered.length()<30)remembered.put(topic);remembered.put(first.optString("topic_id",first.optString("id")));while(remembered.length()>30)remembered.remove(0);
         c.getSystemService(NotificationManager.class).notify(breaking?202:200,notification);prefs(c).edit().putLong("last_notification",now).putString("notified_topics",remembered.toString()).apply();
     }
     public static void testNotification(Context c){if(!permission(c))return;createChannel(c);PendingIntent open=PendingIntent.getActivity(c,102,new Intent(c,MainActivity.class),PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);Notification n=new Notification.Builder(c,CHANNEL).setSmallIcon(R.drawable.ic_notification).setColor(Color.rgb(214,183,117)).setContentTitle("Thai Daily News").setContentText("พร้อมแล้ว ข่าวสำคัญจะมาหาคุณในจังหวะที่เหมาะสม").setStyle(new Notification.BigTextStyle().bigText("พร้อมแล้ว ข่าวสำคัญจะมาหาคุณในจังหวะที่เหมาะสม")).setContentIntent(open).setAutoCancel(true).build();c.getSystemService(NotificationManager.class).notify(201,n);}

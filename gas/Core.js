@@ -45,11 +45,13 @@ var TDCore = (function () {
     return item.language==='th'?'thailand':'world';
   }
   function titleWords(title) {
-    var stop={ข่าว:1,ด่วน:1,ล่าสุด:1,วันนี้:1,เผย:1,เปิด:1,หลัง:1,ก่อน:1,พร้อม:1,จาก:1,ของ:1,และ:1,หรือ:1,ใน:1,ที่:1,เป็น:1,the:1,and:1,for:1,with:1,from:1,after:1,new:1,latest:1,breaking:1};
+    var stop={ข่าว:1,ด่วน:1,ล่าสุด:1,วันนี้:1,เผย:1,เปิด:1,หลัง:1,ก่อน:1,พร้อม:1,จาก:1,ของ:1,และ:1,หรือ:1,ใน:1,ที่:1,เป็น:1,นายก:1,รัฐบาล:1,ตำรวจ:1,ประเทศ:1,ไทย:1,แถลง:1,the:1,and:1,for:1,with:1,from:1,after:1,new:1,latest:1,breaking:1};
     return clean(title).toLowerCase().replace(/[|()[\]{}“”‘’'".,:;!?/\\–—_-]/g,' ').split(/\s+/).filter(function(w){return w.length>=3&&!stop[w]&&!/^\d{1,2}[\/.:-]\d/.test(w);}).slice(0,22);
   }
   function similar(a,b) {
     if(a.category_id!==b.category_id||Math.abs(Date.parse(a.published_at)-Date.parse(b.published_at))>12*3600000)return false;
+    var compactA=clean(a.title).toLowerCase().replace(/[\s\p{P}]/gu,''),compactB=clean(b.title).toLowerCase().replace(/[\s\p{P}]/gu,'');
+    if(compactA.length>=12&&compactA===compactB)return true;
     var aw=a._topicWords||titleWords(a.title),bw=b._topicWords||titleWords(b.title),seen={},common=0;
     aw.forEach(function(w){seen[w]=true;});bw.forEach(function(w){if(seen[w])common++;});
     var base=Math.max(1,Math.min(aw.length,bw.length));
@@ -58,21 +60,24 @@ var TDCore = (function () {
   function impactOf(item) {
     var s=String(item.title||'');
     if(/ฉากทัศน์|บทวิเคราะห์|วิเคราะห์(?:สถานการณ์|แนวโน้ม)|ย้อนรอย|ย้อน(?:อดีต|ประวัติ)|บทเรียนจาก|\b(?:opinion|analysis|anniversary|what if)\b/i.test(s))return 1;
+    if(/ซ้อม(?:แผน)?(?:อพยพ|หนีไฟ|รับมือ)|ฝึกซ้อม|จำลองเหตุการณ์|ครบรอบ\s*\d+\s*ปี|(?:ยัน|ยืนยัน|ย้ำ)[^.!?]{0,18}(?:ไม่ยุบสภา|ไม่ลาออก|ไม่เกิดรัฐประหาร)|(?:ปัดข่าว|ปฏิเสธข่าว)[^.!?]{0,18}(?:ยุบสภา|ลาออก|รัฐประหาร)|ไม่มี(?:แนวคิด|แผน)[^.!?]{0,12}(?:ยุบสภา|ลาออก)/i.test(s))return 1;
     var quake=s.match(/(?:ขนาด|magnitude)\s*([0-9]+(?:\.[0-9]+)?)/i);if(quake&&Number(quake[1])<5)return 1;
     var noise=/รีบเลย|เลขเด็ด|ดูดวง|ผลบอล|ดารา|เปิดวาร์ป|ชาวเน็ต|ไวรัล|สุดช็อก|ราคาทองวันนี้|ภาวะตลาด|stock focus|สรุปปริมาณการซื้อขาย|กวาดรางวัล|คว้ารางวัล|เปิดตัวสินค้า|โปรโมชั่น/i.test(s);
     if(noise)return 0;
     if(/สึนามิ|แผ่นดินไหว|อพยพ|ภัยพิบัติ|ประกาศฉุกเฉิน|กฎอัยการศึก|รัฐประหาร|ก่อการร้าย|ระเบิดครั้งใหญ่|โรงไฟฟ้านิวเคลียร์|โรคระบาด|ระบบล่มทั่วประเทศ|ไฟดับทั่วประเทศ|\b(?:tsunami|major earthquake|evacuation|state of emergency|coup|terror attack|nuclear plant|pandemic)\b/i.test(s))return 5;
-    if(/ประกาศเตือน|เตือนภัย|น้ำท่วมฉับพลัน|พายุเข้า|ดินถล่ม|สงคราม|ขีปนาวุธ|โจมตีทางอากาศ|หยุดยิง|ยุบสภา|นายก(?:ฯ|รัฐมนตรี)?ลาออก|ศาลรัฐธรรมนูญ.*(?:ยุบ|วินิจฉัย)|ผลเลือกตั้ง|ปิดน่านฟ้า|ปิดชายแดน|\b(?:war|missile|airstrike|ceasefire|parliament dissolved|prime minister resigns|election result)\b/i.test(s))return 4;
+    if(/น้ำท่วมฉับพลัน|พายุเข้า|ดินถล่ม|สงคราม|ขีปนาวุธ|โจมตีทางอากาศ|หยุดยิง|ยุบสภา|นายก(?:ฯ|รัฐมนตรี)?ลาออก|ศาลรัฐธรรมนูญ.*(?:ยุบ|วินิจฉัย)|ผลเลือกตั้ง|ปิดน่านฟ้า|ปิดชายแดน|\b(?:war|missile|airstrike|ceasefire|parliament dissolved|prime minister resigns|election result)\b/i.test(s))return 4;
+    if(/ประกาศเตือน|เตือนภัย/i.test(s))return 2;
     if(/เลือกตั้ง|มติครม\.|มติ กนง\.|ขึ้นดอกเบี้ย|ลดดอกเบี้ย|เงินเฟ้อ.*(?:สูงสุด|พุ่งแรง)|จีดีพี|gdp|คว่ำบาตร|ข้อตกลงสันติภาพ|ประกาศใช้|มีผลบังคับ|ข้อมูลรั่วไหล|โจมตีไซเบอร์/i.test(s))return 3;
     if(/รัฐบาล|รัฐสภา|ศาล|ธปท\.|น้ำท่วม|พายุ|เศรษฐกิจ|เงินเฟ้อ|ราคาน้ำมัน|ค่าไฟ|ค่าแรง|ภาษี|สาธารณสุข|วัคซีน/i.test(s))return 2;
     return 1;
   }
   function signalOf(item,now) {
     var hours=Math.max(0,(now-Date.parse(item.published_at))/3600000),impact=item.impact||0,sources=item.source_count||1,scope=scopeOf(item),signal='latest',level='none';
-    var explicit=/^(?:ด่วน|breaking)|ประกาศเตือน|เตือนภัย|อพยพ|เกิดเหตุ|มติ(?:ครม\.| กนง\.)|ยุบสภา|ลาออก|\b(?:breaking|evacuation|state of emergency)\b/i.test(item.title||'');
+    var explicit=/^(?:ด่วน(?:\s*ที่สุด)?|breaking\b)/i.test(item.title||'');
+    var directHost=host(item.url),official=/^(?:tmd\.go\.th|ddpm\.go\.th|bot\.or\.th|bot\.go\.th|thaigov\.go\.th|ddc\.moph\.go\.th)$/.test(directHost),confirmed=sources>=2||official;
     var decision=/มติ|ผลเลือกตั้ง|ขึ้นดอกเบี้ย|ลดดอกเบี้ย|ยุบสภา|ลาออก|ประกาศใช้|มีผลบังคับ|จีดีพี|gdp|\b(?:decision|election result|resigns|takes effect)\b/i.test(item.title||'');
-    if((hours<=3&&impact>=5)||(hours<=2&&impact>=4&&(explicit||sources>=2))){signal='breaking';level='breaking';}
-    else if((hours<=8&&impact>=4&&(sources>=2||scope==='thailand'))||(hours<=6&&impact>=3&&sources>=3&&decision)){signal='major';level='major';}
+    if(confirmed&&((hours<=3&&impact>=5)||(hours<=2&&impact>=4&&explicit))){signal='breaking';level='breaking';}
+    else if(confirmed&&((hours<=8&&impact>=4)||(hours<=6&&impact>=3&&decision&&(sources>=3||official)))){signal='major';level='major';}
     else if(hours<=12&&sources>=3&&(impact>=2||sources>=4)){signal='trending';level='watch';}
     else if(hours<=3&&sources>=2&&impact>=2){signal='rising';level='watch';}
     var eligible=scope==='thailand'?level!=='none':(signal==='breaking'||signal==='major')&&impact>=4;
@@ -113,6 +118,7 @@ var TDCore = (function () {
       if(map[it.id]&&map[it.id].image_checked_at&&!it.image_checked_at)it.image_checked_at=map[it.id].image_checked_at;
       if(/^google-/.test(it.adapter||'')||host(it.url)==='news.google.com'){it.excerpt='';it.snippet='';it.reading_text='';}
       else {it.excerpt=clean(it.excerpt).replace(/\s*The (?:post|po)[\s\S]*$/i,'').trim();it.snippet=it.excerpt;}
+      if(it.reading_origin==='publisher'&&it.reading_text){it.excerpt=clean(it.reading_text).slice(0,320);it.snippet=it.excerpt;}
       it.category_id=classify(it.title,it.excerpt,it.category_id);
         it.content_hash=hash(it.title+'|'+(it.reading_text||it.excerpt||''));
       var cat=categories.filter(function(c){return c.id===it.category_id;})[0]||categories[1];
@@ -136,11 +142,13 @@ var TDCore = (function () {
     return items.slice(0,360);
   }
   function top(items,limit) {
-    var sorted=items.slice().sort(function(a,b){return b.score-a.score;}),out=[],seen={},topics={};
+    var representatives={};items.forEach(function(it){var topic=it.topic_id||it.id,old=representatives[topic];if(!old||readingQuality(it)>readingQuality(old)||readingQuality(it)===readingQuality(old)&&it.score>old.score)representatives[topic]=it;});
+    var sorted=Object.keys(representatives).map(function(k){return representatives[k];}).sort(function(a,b){return b.score-a.score;}),out=[],seen={},topics={};
     sorted.forEach(function(it){if(!seen[it.category_id]&&!topics[it.topic_id]&&out.length<limit){out.push(it);seen[it.category_id]=true;topics[it.topic_id]=true;}});
     sorted.forEach(function(it){if(out.length<limit&&!topics[it.topic_id]&&!out.some(function(o){return o.id===it.id;})){out.push(it);topics[it.topic_id]=true;}});
     return out.sort(function(a,b){return b.score-a.score;});
   }
+  function readingQuality(it){return ((it.reading_text||it.excerpt||'').length>=120?4:0)+(!/^google-/.test(it.adapter||'')&&host(it.url)!=='news.google.com'?2:0)+(it.image_url?1:0);}
   function quiet(prefs,now) {
     if(!prefs.quietHours)return false;
     var hour=new Date(now-(Number(prefs.timezoneOffset)||-420)*60000).getUTCHours();

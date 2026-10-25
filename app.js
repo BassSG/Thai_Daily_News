@@ -45,7 +45,7 @@
     if(state.view==='alerts')items=items.filter(it=>it.alert_eligible&&(it.signal==='breaking'||it.signal==='major'));
     if(state.view==='trending')items=items.filter(it=>it.scope!=='world'&&(it.signal==='trending'||it.signal==='rising'));
     items.sort(['today','alerts','trending'].includes(state.view)?(a,b)=>b.score-a.score:(a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));
-    if(['today','alerts','trending'].includes(state.view)){const topics=new Set();items=items.filter(it=>{const topic=it.topic_id||it.id;if(topics.has(topic))return false;topics.add(topic);return true;});}
+    if(['today','alerts','trending'].includes(state.view))items=TDNReading.representatives(items);
     return items;
   }
   function renderPulse(){
@@ -116,7 +116,7 @@
   }
   function renderArticle(it){
     const c=categoryOf(it),summary=load('tdn.summary.'+it.id,null),related=(state.snapshot?.items||[]).filter(other=>other.id!==it.id&&other.topic_id&&other.topic_id===it.topic_id).filter((other,i,all)=>all.findIndex(o=>o.host===other.host)===i).slice(0,3);
-    $('#articleContent').innerHTML=`<div class="article-labels"><span class="category-label">${esc(c.label)}</span>${signalBadge(it)}</div><h2>${esc(titleOf(it))}</h2>${meta(it)}<div class="article-actions"><div><button data-save="${it.id}" class="${state.saved[it.id]?'saved':''}">${icon(state.saved[it.id]?'check':'bookmark')}${state.saved[it.id]?'บันทึกแล้ว':'บันทึกข่าว'}</button><button data-share="${it.id}">${icon('share')}แชร์</button></div><span class="article-read-note">อ่านในแบบของคุณ</span></div>${photo(it,'article')}<section class="article-context"><span class="section-eyebrow">ใจความจากสำนักข่าว</span>${(it.reading_text||it.excerpt||'').length?String(it.reading_text||it.excerpt).split(/\n\s*\n/).map(p=>`<p class="article-excerpt">${esc(p)}</p>`).join(''):'<p class="article-excerpt limited-context">แหล่งข่าวนี้ให้มาเฉพาะพาดหัว จึงยังอธิบายรายละเอียดในแอปไม่ได้ กรุณาเปิดต้นฉบับเพื่ออ่านเนื้อหาที่ครบถ้วน</p>'}</section><div class="excerpt-note">เนื้อหาบางส่วนจาก ${esc(it.source)} · เผยแพร่ ${esc(fullTime(it.published_at))}</div><a class="primary-button wide original-button" href="${esc(safeUrl(it.url))}" target="_blank" rel="noopener noreferrer" data-external="${esc(safeUrl(it.url))}">อ่านฉบับเต็มที่ ${esc(it.source)} ${icon('external')}</a><span class="original-label">เปิดเว็บไซต์สำนักข่าวต้นฉบับ</span><section class="ai-panel"><h3>${icon('sparkles')}สรุปไทยให้อ่านง่าย</h3><p>เตรียมให้อัตโนมัติจากเนื้อหาที่แหล่งข่าวส่งมา · AI อาจคลาดเคลื่อน ตรวจสอบกับต้นฉบับได้</p><div id="aiResult" class="ai-result">${summary?.hash===it.content_hash?esc(summary.text):''}</div><button class="secondary-button wide" id="summarizeButton" data-summary="${it.id}" ${summary?.hash===it.content_hash?'hidden':''}>${icon('sparkles')}ช่วยแปลและสรุป</button></section>${related.length?`<section class="related-stories"><span class="section-eyebrow">ANOTHER PERSPECTIVE</span><h3>รายงานในประเด็นเดียวกัน</h3>${related.map(other=>`<button data-open="${other.id}"><span>${esc(other.source)}</span><b>${esc(titleOf(other))}</b>${icon('arrow')}</button>`).join('')}</section>`:''}`;
+    $('#articleContent').innerHTML=`<div class="article-labels"><span class="category-label">${esc(c.label)}</span>${signalBadge(it)}</div><h2>${esc(titleOf(it))}</h2>${meta(it)}<div class="article-actions"><div><button data-save="${it.id}" class="${state.saved[it.id]?'saved':''}">${icon(state.saved[it.id]?'check':'bookmark')}${state.saved[it.id]?'บันทึกแล้ว':'บันทึกข่าว'}</button><button data-share="${it.id}">${icon('share')}แชร์</button></div><span class="article-read-note">อ่านในแบบของคุณ</span></div>${photo(it,'article')}<section class="article-context"><span class="section-eyebrow">ใจความจากสำนักข่าว</span>${(it.reading_text||it.excerpt||'').length?String(it.reading_text||it.excerpt).split(/\n\s*\n/).map(p=>`<p class="article-excerpt">${esc(p)}</p>`).join(''):'<p class="article-excerpt limited-context">แหล่งข่าวนี้ให้มาเฉพาะพาดหัว จึงยังอธิบายรายละเอียดในแอปไม่ได้ กรุณาเปิดต้นฉบับเพื่ออ่านเนื้อหาที่ครบถ้วน</p>'}</section><div class="excerpt-note">เนื้อหาบางส่วนจาก ${esc(it.source)} · เผยแพร่ ${esc(fullTime(it.published_at))}</div><a class="primary-button wide original-button" href="${esc(safeUrl(it.url))}" target="_blank" rel="noopener noreferrer" data-external="${esc(safeUrl(it.url))}">อ่านฉบับเต็มที่ ${esc(it.source)} ${icon('external')}</a><span class="original-label">เปิดเว็บไซต์สำนักข่าวต้นฉบับ</span><section class="ai-panel"><h3>${icon('sparkles')}สรุปไทยให้อ่านง่าย</h3><p>ข่าวอังกฤษและข่าวสำคัญสรุปไทยอัตโนมัติ · ข่าวไทยทั่วไปเลือกสรุปได้เมื่ออยากอ่านให้สั้นลง · AI อาจคลาดเคลื่อน</p><div id="aiResult" class="ai-result">${summary?.hash===it.content_hash?esc(summary.text):''}</div><button class="secondary-button wide" id="summarizeButton" data-summary="${it.id}" ${summary?.hash===it.content_hash?'hidden':''}>${icon('sparkles')}ช่วยแปลและสรุป</button></section>${related.length?`<section class="related-stories"><span class="section-eyebrow">ANOTHER PERSPECTIVE</span><h3>รายงานในประเด็นเดียวกัน</h3>${related.map(other=>`<button data-open="${other.id}"><span>${esc(other.source)}</span><b>${esc(titleOf(other))}</b>${icon('arrow')}</button>`).join('')}</section>`:''}`;
   }
   function requestId(){return 'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);}
   function nativeRequest(action,payload={}){return new Promise((resolve,reject)=>{const id=requestId(),timer=setTimeout(()=>{requests.delete(id);reject(new Error('การเชื่อมต่อใช้เวลานาน กรุณาลองอีกครั้ง'));},45000);requests.set(id,{resolve,reject,timer});NativeNews.request(id,JSON.stringify({action,...payload}));});}
@@ -148,16 +148,26 @@
     }catch(error){if(!state.snapshot)render();renderFreshness(true);if(!silent)toast(error.message||'ยังเชื่อมต่อไม่ได้ ข่าวที่บันทึกไว้ยังอ่านได้');}
     finally{state.refreshing=false;$('#refreshButton').classList.remove('loading');$('#refreshButton').disabled=false;}
   }
-  const readingRequests=new Set();
+  const readingRequests=new Map();
   async function prepareReading(it){
     const cached=load('tdn.summary.'+it.id,null);
-    if(cached?.hash===it.content_hash||readingRequests.has(it.id))return;
-    if((it.reading_text||it.excerpt||'').length<80){$('#aiResult').textContent='ข้อมูลยังไม่พอสำหรับสรุป ระบบจะไม่เดารายละเอียดจากพาดหัว';$('#summarizeButton').hidden=true;return;}
-    $('#aiResult').textContent='กำลังเตรียมใจความภาษาไทยให้อัตโนมัติ…';
-    readingRequests.add(it.id);
-    try{await summarize(it.id,true);}finally{readingRequests.delete(it.id);}
+    if(cached?.hash===it.content_hash)return;
+    const mode=TDNReading.mode(it);
+    if(mode==='unavailable'){$('#aiResult').textContent='ข้อมูลยังไม่พอสำหรับสรุป ระบบจะไม่เดารายละเอียดจากพาดหัว';$('#summarizeButton').hidden=true;return;}
+    await summarize(it.id,true,mode==='cached');
   }
-  async function summarize(id,automatic=false){const button=$('#summarizeButton');if(!button)return;button.disabled=true;button.innerHTML=icon('refresh')+' กำลังเตรียมสรุป';try{const res=await command({action:'summary',id});if(!res.ok)throw new Error(res.error);save('tdn.summary.'+id,{hash:getItem(id).content_hash,text:res.summary});if(state.selected===id){$('#aiResult').textContent=res.summary;button.hidden=true;}}catch(error){if(state.selected===id){$('#aiResult').textContent=error.message||'ยังเตรียมสรุปไม่ได้ อ่านเนื้อหาจากสำนักข่าวด้านบนได้';if(!automatic)toast(error.message||'ยังสรุปไม่ได้ ลองอีกครั้งภายหลัง');}}finally{button.disabled=false;button.innerHTML=icon('sparkles')+' ช่วยแปลและสรุปข่าวนี้';}}
+  async function summarize(id,automatic=false,onlyCached=false){
+    const item=getItem(id);if(!item)return;
+    if(state.selected===id){const button=$('#summarizeButton');button.disabled=true;button.hidden=false;button.innerHTML=icon('refresh')+(onlyCached?' ตรวจสรุปที่มีอยู่':' กำลังเตรียมสรุป');$('#aiResult').textContent=onlyCached?'กำลังตรวจสรุปที่มีอยู่…':'กำลังเตรียมใจความภาษาไทย…';}
+    let pending=readingRequests.get(id);
+    if(!pending){pending=command({action:'summary',id,onlyCached});readingRequests.set(id,pending);}
+    try{
+      const res=await pending;if(!res.ok)throw new Error(res.error);
+      if(res.summary)save('tdn.summary.'+id,{hash:res.hash||item.content_hash,text:res.summary});
+      if(state.selected===id){$('#aiResult').textContent=res.summary||'อ่านใจความจากสำนักข่าวด้านบนได้เลย หากต้องการสรุปให้สั้นลง แตะปุ่มด้านล่าง';$('#summarizeButton').hidden=!!res.summary;}
+    }catch(error){if(state.selected===id){$('#aiResult').textContent=error.message||'ยังเตรียมสรุปไม่ได้ อ่านเนื้อหาจากสำนักข่าวด้านบนได้';if(!automatic)toast(error.message||'ยังสรุปไม่ได้ ลองอีกครั้งภายหลัง');}}
+    finally{if(readingRequests.get(id)===pending)readingRequests.delete(id);if(state.selected===id){const button=$('#summarizeButton');button.disabled=false;button.innerHTML=icon('sparkles')+' ช่วยสรุปใจความสำคัญ';}}
+  }
   function updateSettings(){
     $('#quietHours').checked=preferences.quietHours!==false;
     $$('[data-alert-mode]').forEach(el=>{el.classList.toggle('active',el.dataset.alertMode===preferences.alertMode);el.setAttribute('aria-pressed',String(el.dataset.alertMode===preferences.alertMode));});
@@ -219,7 +229,7 @@
     if(el.dataset.external&&native){event.preventDefault();NativeNews.openExternal(el.dataset.external);return;}
     if(el.tagName==='A'&&native&&/^https?:/.test(el.href)){event.preventDefault();NativeNews.openExternal(el.href);}
   });
-  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeArticle();if(event.key==='/'&&!state.selected&&!$('dialog[open]')&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){event.preventDefault();document.body.classList.add('search-open');$('#searchToggle').setAttribute('aria-expanded','true');$('#searchInput').focus();}if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-open][role=button]')){event.preventDefault();openArticle(event.target.dataset.open);}if(event.key==='Tab'&&!$('#articleDrawer').hidden){const focusable=$$('#articleDrawer button:not([hidden]), #articleDrawer a'),first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeArticle();if(event.key==='/'&&!state.selected&&!$('dialog[open]')&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){event.preventDefault();document.body.classList.add('search-open');$('#searchToggle').setAttribute('aria-expanded','true');$('#searchInput').focus();}if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-open][role=button]')){event.preventDefault();openArticle(event.target.dataset.open);}if(event.key==='Tab'&&!$('#articleDrawer').hidden){const focusable=$('#articleDrawer button:not([hidden]):not(:disabled), #articleDrawer a[href]').filter(el=>!el.closest('[hidden]')&&el.getClientRects().length),first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
   $('#newStoriesButton').addEventListener('click',()=>{if(pendingSnapshot){useSnapshot(pendingSnapshot);window.scrollTo({top:0,behavior:'smooth'});}});
   $('#refreshButton').addEventListener('click',()=>refresh());$('#loadMore').addEventListener('click',()=>{state.limit+=20;render();});
   $('#searchInput').addEventListener('input',event=>{state.query=event.target.value.trim();state.limit=20;render();});$('#timeFilter').addEventListener('change',()=>{state.limit=20;render();});
